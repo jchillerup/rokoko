@@ -55,12 +55,10 @@ MPU9150Lib MPU;                                              // the MPU object
 #define  MPU_MAG_MIX_GYRO_AND_SOME_MAG  50                 // mainly gyros with a bit of mag correction 
 
 //  MPU_LPF_RATE is the low pas filter rate and can be between 5 and 188Hz
-
 #define MPU_LPF_RATE   5
 
 //  SERIAL_PORT_SPEED defines the speed to use for the debug serial port
-
-#define  SERIAL_PORT_SPEED  115200
+#define  SERIAL_PORT_SPEED  57600
 
 MPUQuaternion gravity;                                     // this is our earth frame gravity vector                 
 
@@ -98,7 +96,6 @@ void loop()
     
     //  now subtract rotated gravity from the body accels to get real accelerations
     //  note that signs are reversed to get +ve acceleration results in the conventional axes.
-    
     result[VEC3_X] = -(MPU.m_calAccel[VEC3_X] - rotatedGravity[QUAT_X]);
     result[VEC3_Y] = -(MPU.m_calAccel[VEC3_Y] - rotatedGravity[QUAT_Y]);
     result[VEC3_Z] = -(MPU.m_calAccel[VEC3_Z] - rotatedGravity[QUAT_Z]);
@@ -185,10 +182,12 @@ void loop()
     Serial.print("\n");
     
     // the residual accelerations 
-    //Serial.print(result[VEC3_X]);Serial.print("-");
-    //Serial.print(result[VEC3_Y]);Serial.print("-");
-    //Serial.print(result[VEC3_Z]);Serial.print("-");
+    Serial.print(result[VEC3_X]);Serial.print("!");
+    Serial.print(result[VEC3_Y]);Serial.print("!");
+    Serial.print(result[VEC3_Z]);
     
+    // This should be integrated twice to the get the position
+    // http://www.varesano.net/blog/fabio/simple-gravity-compensation-9-dom-imus
     
     Serial.print("&");
   }

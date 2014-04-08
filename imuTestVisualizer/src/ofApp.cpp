@@ -69,7 +69,7 @@ void ofApp::setup(){
 	
 	
     serial.listDevices();
-    serial.setup(0, 115200);
+    serial.setup(0, 57600);
     serial.flush();
     
 	animIsPaused = false;
@@ -103,7 +103,7 @@ void ofApp::setup(){
     hand->setGlobalPosition(ofVec3f(0,-50,0));
 	// set joint names according to their map indices.
     
-    gui = new ofxUISuperCanvas("PANEL");
+    gui = new ofxUISuperCanvas("Rokoko MoCap");
     
     vector<float> buffer;
     for(int i = 0; i < 256; i++)
@@ -111,13 +111,17 @@ void ofApp::setup(){
         buffer.push_back(0.0);
     }
     
-    gui->addLabel("MOVING GRAPH", OFX_UI_FONT_MEDIUM);
-    mg = gui->addMovingGraph("MOVING", buffer, 256, 0.0, 1.0);
+    //gui->addLabel("MOVING GRAPH", OFX_UI_FONT_MEDIUM);
+    //mg = gui->addMovingGraph("MOVING", buffer, 256, 0.0, 1.0);
 
     gui->setPosition(0, 0);
     gui->autoSizeToFitWidgets();
     
 	ofAddListener(gui->newGUIEvent,this,&ofApp::guiEvent);
+    
+    position = ofVec3f(0,0,0);
+    velocity = ofVec3f(0,0,0);
+    
     
 }
 
@@ -135,31 +139,27 @@ void ofApp::update(){
         indata = ofSplitString(in, "\n");
         
         
-        if(indata.size() == 11) {
-            //cout<<indata[0]<<endl;
+        if(indata.size() == 3) {
+            cout<<indata[0]<<endl;
             
             /*for(int i=0; i<indata.size();i++) {
                 ofStringReplace(indata[i], "\t", "");
             }*/
             
-            if(indata[0] == "DATASTART") {
+            if(indata[0] == "DS") {
                 /*for(int i=0; i<indata.size();i++) {
                     cout<<indata[i]<<endl;
                 }*/
+                updateQuaternion(indata[1], &fusedQuaternion);
+                updateVector(indata[2], &residualAccel);
                 
-                updateQuaternion(indata[1], &rawQuarternion);
-                updateVector(indata[2], &rawGyro);
-                updateVector(indata[3], &rawAccel);
-                updateVector(indata[4], &rawMag);
-            
-                updateQuaternion(indata[5], &dmpQuaternion);
-            
-                updateVector(indata[6], &dmpEulerPose);
-                updateVector(indata[7], &calAccel);
-                updateVector(indata[8], &calMag);
-            
-                updateVector(indata[9], &fusedEulerPose);
-                updateQuaternion(indata[10], &fusedQuaternion);
+                if(!dataReceived) {
+                    state = 1;
+                    //This is the first time we get data
+                    firstData = ofGetElapsedTimeMillis();
+                    dataReceived = true;
+                    offset = residualAccel;
+                }
         
             }
             indata.clear();
@@ -167,6 +167,28 @@ void ofApp::update(){
         serial.flush();
     }
     
+    
+    if(dataReceived && (ofGetElapsedTimeMillis() - firstData) < calTime) {
+        
+        
+        // calibration stage for 3 seconds
+        //calZeroVector = residualAccel;
+        offset = (offset * 59.0/60.0) + (residualAccel + 1.0/60.0);
+        
+        
+    } else if (dataReceived) {
+        state = 2;
+        // running stage
+        
+        residualAccel += (residualAccel - offset) * 0.0001;
+        velocity += residualAccel * 0.001;
+        position += velocity * 0.01;
+        
+        
+    }
+    
+    
+    elbow->setOrientation(fusedQuaternion);
     
     //mg->addPoint(buffer[0]);
     //for(int i = 0; i < 256; i++) { buffer[i] = ofNoise(i/100.0, ofGetElapsedTimef()); }
@@ -186,11 +208,8 @@ void ofApp::draw(){
     //ofDrawGrid(600);
     
 	ofPushMatrix();
-    /*
-    hand->draw();
-    elbow->draw();
-    shoulder->draw();
-     */
+    
+    ofTranslate(100, 0);
     
     ofVec3f qaxis; float qangle;
     fusedQuaternion.getRotate(qangle, qaxis);
@@ -201,31 +220,28 @@ void ofApp::draw(){
     
 	ofPopMatrix();
     
-    
     ofPushMatrix();
-    ofTranslate(200, 0);
-    dmpQuaternion.getRotate(qangle, qaxis);
-    ofRotate(qangle, qaxis.x, qaxis.y, qaxis.z);
+    ofTranslate(-100, 0);
     
-    //ofDrawBox(0, 0, 0, 100, 100, 100);
-    ofDrawCone(0, 0, 0, 20, 180);
+    hand->draw();
+    elbow->draw();
+    shoulder->draw();
     
-	ofPopMatrix();
+    ofPopMatrix();
     
-    ofPushMatrix();
-    
-    ofTranslate(-200, 0);
-    ofRotateX(ofRadToDeg(fusedEulerPose.x));
-    ofRotateY(ofRadToDeg(fusedEulerPose.y));
-    ofRotateZ(ofRadToDeg(fusedEulerPose.z));
-    
-    ofSetColor(255,0,0);
-    ofDrawCone(0, 0, 0, 20, 180);
-    
-	ofPopMatrix();
 	
 	cam.end();
     
+    if(state==1){
+        ofSetColor(255, 255, 255);
+        ofDrawBitmapString("Clibrating", 100,100);
+    } else if(state == 2) {
+        ofSetColor(0, 255, 0);
+        ofDrawBitmapString("Receiving data", 100,100);
+    } else if(state==0) {
+        ofSetColor(255, 0, 0);
+        ofDrawBitmapString("Waiting for data", 100,100);
+    }
 
 }
 

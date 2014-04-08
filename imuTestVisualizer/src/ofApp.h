@@ -47,12 +47,26 @@ public:
     ofQuaternion fusedQuaternion;
     ofVec3f fusedEulerPose;
     
+    ofVec3f residualAccel;
+    ofVec3f velocity;
+    ofVec3f position;
+    
+    ofVec3f calZeroVector;
+    
     ofEasyCam cam;
     
     ofxUISuperCanvas *gui;
     float *buffer;
     ofxUIMovingGraph *mg;
     void guiEvent(ofxUIEventArgs &e);
+    
+    int long calTime = 10000;
+    int long firstData = 0;
+    bool dataReceived = false;
+    
+    ofVec3f offset = ofVec3f(0,0,0);
+    
+    int state = 0; // 0 waiting for data - 1 calibrating - 2 receiving - 3 error
 	
 };
 

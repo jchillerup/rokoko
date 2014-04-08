@@ -140,16 +140,8 @@ void ofApp::update(){
         
         
         if(indata.size() == 3) {
-            cout<<indata[0]<<endl;
-            
-            /*for(int i=0; i<indata.size();i++) {
-                ofStringReplace(indata[i], "\t", "");
-            }*/
             
             if(indata[0] == "DS") {
-                /*for(int i=0; i<indata.size();i++) {
-                    cout<<indata[i]<<endl;
-                }*/
                 updateQuaternion(indata[1], &fusedQuaternion);
                 updateVector(indata[2], &residualAccel);
                 
@@ -169,7 +161,6 @@ void ofApp::update(){
     
     
     if(dataReceived && (ofGetElapsedTimeMillis() - firstData) < calTime) {
-        
         
         // calibration stage for 3 seconds
         //calZeroVector = residualAccel;
@@ -209,26 +200,27 @@ void ofApp::draw(){
     
 	ofPushMatrix();
     
-    ofTranslate(100, 0);
+    ofTranslate(400, 0);
     
     ofVec3f qaxis; float qangle;
     fusedQuaternion.getRotate(qangle, qaxis);
     ofRotate(qangle, qaxis.x, qaxis.y, qaxis.z);
     
     //ofDrawBox(0, 0, 0, 100, 100, 100);
-    ofDrawCone(0, 0, 0, 20, 180);
+    ofSetColor(0,0,200);
+    ofDrawCone(0, 0, 0, 10, 90);
     
 	ofPopMatrix();
     
     ofPushMatrix();
-    ofTranslate(-100, 0);
+    ofScale(3,3,3);
     
+    ofSetColor(255,255,255);
     hand->draw();
     elbow->draw();
     shoulder->draw();
     
     ofPopMatrix();
-    
 	
 	cam.end();
     

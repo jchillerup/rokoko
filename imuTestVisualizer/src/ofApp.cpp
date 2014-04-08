@@ -82,26 +82,73 @@ void ofApp::setup(){
 //	mCam1.setPosition(500, 800, 800);
 	cam.lookAt(ofVec3f(0));
 
-	
-    for (int i = 0; i < 3; i++){
-        mSkeleton.push_back(JointP_t(new ofxJoint));
+	// Pelvis is root Maybe we should have another point on torso?
+    mSkeleton["Pelvis"] = JointP_t(new ofxJoint());
+    mSkeleton["Pelvis"]->setGlobalPosition(ofVec3f(0));
+    
+    mSkeleton["Chest"] = JointP_t(new ofxJoint());
+	mSkeleton["Chest"]->setParent(mSkeleton["Pelvis"]);
+	mSkeleton["Chest"]->setPosition(ofVec3f(0, 100 , 0 ));
+    
+    mSkeleton["Head"] = JointP_t(new ofxJoint());
+	mSkeleton["Head"]->setParent(mSkeleton["Chest"]);
+	mSkeleton["Head"]->setPosition(ofVec3f(0, 60 , 0 ));
+    
+    string names[4] = {"Hip", "Knee", "Foot", "Toe"};
+    
+    for (int i = 0; i < 4; i++){
+        mSkeleton["L_" + names[i]] = JointP_t(new ofxJoint());
+        mSkeleton["R_" + names[i]] = JointP_t(new ofxJoint());
+    }
+        
+    // apply a limb's hierarchy
+    mSkeleton["L_Toe"]->bone(mSkeleton["L_Foot"])->bone(mSkeleton["L_Knee"])->bone(mSkeleton["L_Hip"])->bone(mSkeleton["Pelvis"]);
+    
+    mSkeleton["R_Toe"]->bone(mSkeleton["R_Foot"])->bone(mSkeleton["R_Knee"])->bone(mSkeleton["R_Hip"])->bone(mSkeleton["Pelvis"]);
+        
+    // set the limb's joints positions
+    mSkeleton["L_Hip"]->setGlobalPosition(ofVec3f(-40, -80 , 0 ));
+    mSkeleton["L_Hip"]->setOrientation(ofQuaternion(20 - 40, ofVec3f(0,1,0)));
+    mSkeleton["L_Knee"]->setPosition(ofVec3f(0, -100, 0));
+    mSkeleton["L_Foot"]->setPosition(ofVec3f(0, -80, 0));
+    mSkeleton["L_Toe"]->setPosition(ofVec3f(0, -5, 20));
+        
+    mSkeleton["R_Hip"]->setGlobalPosition(ofVec3f(40, -80 , 0 ));
+    mSkeleton["R_Hip"]->setOrientation(ofQuaternion(20 - 40, ofVec3f(0,-1,0)));
+    mSkeleton["R_Knee"]->setPosition(ofVec3f(0, -100, 0));
+    mSkeleton["R_Foot"]->setPosition(ofVec3f(0, -80, 0));
+    mSkeleton["R_Toe"]->setPosition(ofVec3f(0, -5, 20));
+    
+    
+    string namesUpper[4] = {"Shoulder", "Elbow", "Hand", "Finger"};
+    for (int i = 0; i < 4; i++){
+        mSkeleton["L_" + namesUpper[i]] = JointP_t(new ofxJoint());
+        mSkeleton["R_" + namesUpper[i]] = JointP_t(new ofxJoint());
     }
     
-    hand = mSkeleton[0];
-    hand->setName("Hand");
+    // apply a limb's hierarchy
+    mSkeleton["L_Finger"]->bone(mSkeleton["L_Hand"])->bone(mSkeleton["L_Elbow"])->bone(mSkeleton["L_Shoulder"])->bone(mSkeleton["Chest"]);
     
-    elbow = mSkeleton[1];
-    elbow->setName("Elbow");
+    mSkeleton["R_Finger"]->bone(mSkeleton["R_Hand"])->bone(mSkeleton["R_Elbow"])->bone(mSkeleton["R_Shoulder"])->bone(mSkeleton["Chest"]);
     
-    shoulder = mSkeleton[2];
-    shoulder->setName("Shoulder");
-	
-    hand->bone(elbow)->bone(shoulder);
+    // set the limb's joints positions
+    mSkeleton["L_Shoulder"]->setGlobalPosition(ofVec3f(-60, 100, 0 ));
+    mSkeleton["L_Shoulder"]->setOrientation(ofQuaternion(20 - 40, ofVec3f(0,1,0)));
+    mSkeleton["L_Elbow"]->setPosition(ofVec3f(-20, -80, 0));
+    mSkeleton["L_Hand"]->setPosition(ofVec3f(0, -80, 0));
+    mSkeleton["L_Finger"]->setPosition(ofVec3f(0, -20, 0));
     
-    shoulder->setGlobalPosition(ofVec3f(0,0,0));
-    elbow->setGlobalPosition(ofVec3f(50,0,0));
-    hand->setGlobalPosition(ofVec3f(0,-50,0));
+    mSkeleton["R_Shoulder"]->setGlobalPosition(ofVec3f(60, 100, 0 ));
+    mSkeleton["R_Shoulder"]->setOrientation(ofQuaternion(20 - 40, ofVec3f(0,-1,0)));
+    mSkeleton["R_Elbow"]->setPosition(ofVec3f(20, -80, 0));
+    mSkeleton["R_Hand"]->setPosition(ofVec3f(0, -80, 0));
+    mSkeleton["R_Finger"]->setPosition(ofVec3f(0, -20, 0));
+    
+    
 	// set joint names according to their map indices.
+    for (map<string, JointP_t>::iterator it = mSkeleton.begin(); it != mSkeleton.end(); ++it){
+		it->second->setName(it->first);
+	}
     
     gui = new ofxUISuperCanvas("Rokoko MoCap");
     
@@ -179,10 +226,12 @@ void ofApp::update(){
     }
     
     
-    elbow->setOrientation(fusedQuaternion);
+    //elbow->setOrientation(fusedQuaternion);
     
     //mg->addPoint(buffer[0]);
     //for(int i = 0; i < 256; i++) { buffer[i] = ofNoise(i/100.0, ofGetElapsedTimef()); }
+    
+    mSkeleton["L_Elbow"]->setOrientation(fusedQuaternion);
     
 }
 
@@ -213,16 +262,28 @@ void ofApp::draw(){
 	ofPopMatrix();
     
     ofPushMatrix();
-    ofScale(3,3,3);
+    //  ofScale(3,3,3);
     
     ofSetColor(255,255,255);
-    hand->draw();
-    elbow->draw();
-    shoulder->draw();
+    
+    //hand->draw();
+    //elbow->draw();
+    //shoulder->draw();
+    
+    for (map<string, JointP_t>::iterator it = mSkeleton.begin(); it != mSkeleton.end(); ++it){
+		it->second->draw(10);
+	}
     
     ofPopMatrix();
 	
 	cam.end();
+    
+    if (shouldDrawLabels) {
+		for (map<string, JointP_t>::iterator it = mSkeleton.begin(); it != mSkeleton.end(); ++it){
+			ofDrawBitmapString(it->second->getName(), cam.worldToScreen(it->second->getGlobalPosition()) * ofVec3f(1,1,0) + ofVec3f(10,10));
+		}
+	}
+    
     
     if(state==1){
         ofSetColor(255, 255, 255);

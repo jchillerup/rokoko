@@ -9,12 +9,12 @@ class ofApp : public ofBaseApp{
 	
 	typedef shared_ptr<pal::ofxSkeleton::ofxJoint>  JointP_t;
 	
-	vector<JointP_t>							mSkeleton;
-        
-	JointP_t hand;
-    JointP_t elbow;
-    JointP_t shoulder;
+	//vector<JointP_t>							mSkeleton;
 	
+	ofEasyCam										mCam1;
+	map<string, JointP_t>							mSkeleton;
+    
+
 public:
 	void setup();
 	void update();

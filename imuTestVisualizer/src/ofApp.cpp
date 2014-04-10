@@ -204,17 +204,17 @@ void ofApp::draw(){
     
     
     ofPushMatrix();
-    ofTranslate(200, 200);
+    ofTranslate(120, 200);
     for(int i=0; i<imus.size(); i++) {
         
         ofTranslate(0, i*80);
         string str = ofToString(i) + ". Device: " + ofToString(imus[i]->deviceId);
         
         if(imus[i]->serial.isInitialized()) {
-            ofSetColor(0, 255, 0);
+            ofSetColor(0, 255, 0,150);
             str += " Initialized.";
         } else {
-            ofSetColor(255, 0, 0);
+            ofSetColor(255, 0, 0,150);
             str += " Not Initialized.";
         }
         

@@ -2,7 +2,7 @@
 
 #include "ofMain.h"
 #include "ofxSkeleton.h"
-#include "ofxUi.h"
+#include "ofxUI.h"
 
 
 class imuJoint {

@@ -5,6 +5,29 @@
 #include "ofxUi.h"
 
 
+class imuJoint {
+public:
+    int SPI_slave_id;
+    // address
+    // when to pull slave select pin high
+    
+    ofQuaternion fusedQuaternion;
+    
+    /*
+    ofQuaternion rawQuarternion;
+    ofVec3f rawGyro;
+    ofVec3f rawAccel;
+    ofVec3f rawMag;
+    ofQuaternion dmpQuaternion;
+    ofVec3f dmpEulerPose;
+    ofVec3f calAccel;
+    ofVec3f calMag;
+    ofVec3f fusedEulerPose;
+    ofVec3f residualAccel;
+    */
+};
+
+
 class ofApp : public ofBaseApp{
 	
 	typedef shared_ptr<pal::ofxSkeleton::ofxJoint>  JointP_t;

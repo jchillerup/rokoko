@@ -3,30 +3,9 @@
 #include "ofMain.h"
 #include "ofxSkeleton.h"
 #include "ofxUI.h"
+#include "Imu.h"
 
-
-class imuJoint {
-public:
-    int SPI_slave_id;
-    // address
-    // when to pull slave select pin high
-    
-    ofQuaternion fusedQuaternion;
-    
-    /*
-    ofQuaternion rawQuarternion;
-    ofVec3f rawGyro;
-    ofVec3f rawAccel;
-    ofVec3f rawMag;
-    ofQuaternion dmpQuaternion;
-    ofVec3f dmpEulerPose;
-    ofVec3f calAccel;
-    ofVec3f calMag;
-    ofVec3f fusedEulerPose;
-    ofVec3f residualAccel;
-    */
-};
-
+#define NUM_SENSORS 2
 
 class ofApp : public ofBaseApp{
 	
@@ -90,6 +69,9 @@ public:
     ofVec3f offset = ofVec3f(0,0,0);
     
     int state = 0; // 0 waiting for data - 1 calibrating - 2 receiving - 3 error
+    
+    vector<Imu *> imus;
+    
 	
 };
 

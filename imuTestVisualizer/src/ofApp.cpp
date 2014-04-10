@@ -9,68 +9,25 @@ bool shouldDrawLabels = false;
 bool shouldDrawInfo = true;
 
 
-string ofxTrimStringRight(string str) {
-    size_t endpos = str.find_last_not_of(" \t\r\n");
-    return (string::npos != endpos) ? str.substr( 0, endpos+1) : str;
-}
-
-// trim trailing spaces
-string ofxTrimStringLeft(string str) {
-    size_t startpos = str.find_first_not_of(" \t\r\n");
-    return (string::npos != startpos) ? str.substr(startpos) : str;
-}
-
-string ofxTrimString(string str) {
-    return ofxTrimStringLeft(ofxTrimStringRight(str));;
-}
-
-string ofxGetSerialString(ofSerial &serial, char until) {
-    static string str;
-    stringstream ss;
-    char ch;
-    int ttl=1000;
-    while ((ch=serial.readByte())>0 && ttl-->0 && ch!=until) {
-        ss << ch;
-    }
-    str+=ss.str();
-    if (ch==until) {
-        string tmp=str;
-        str="";
-        return ofxTrimString(tmp);
-    } else {
-        return "";
-    }
-}
-
-
-
-void updateQuaternion(string str, ofQuaternion * quat, string delimiter = "!") {
-    if(str.length() > 3) {
-        vector<string> floats = ofSplitString(str, delimiter);
-        quat->set(ofToFloat(floats[0]), ofToFloat(floats[2]), -ofToFloat(floats[3]), ofToFloat(floats[1]));
-    }
-    //quat->set(ofToFloat(floats[0]), ofToFloat(floats[1]), ofToFloat(floats[2]), ofToFloat(floats[3]));
-};
-
-
-void updateVector(string str, ofVec3f * vec, string delimiter = "!") {
-    if(str.length() > 2) {
-        vector<string> floats = ofSplitString(str, delimiter);
-        vec->x = ofToFloat(floats[0]);
-        vec->y = ofToFloat(floats[2]);
-        vec->z = ofToFloat(floats[1]);
-    }
-    
-};
-
-
 //--------------------------------------------------------------
 void ofApp::setup(){
 	
-	
     serial.listDevices();
-    serial.setup(0, 57600);
-    serial.flush();
+    
+    int serialAdresses [] = {0,2,4,6};
+    
+    for(int i=0; i<NUM_SENSORS; i++) {
+        Imu * imu = new Imu();
+        
+        imu->setup(serialAdresses[i]);
+        
+        imus.push_back(imu);
+        
+    }
+	
+    
+    //serial.setup(0, 57600);
+    //serial.flush();
     
 	animIsPaused = false;
 	animCurrentFrame = 0;
@@ -79,7 +36,7 @@ void ofApp::setup(){
 	ofDisableAlphaBlending();
 	
 	//cam.setupPerspective(false, 60, 0.1, 3000);
-//	mCam1.setPosition(500, 800, 800);
+    //mCam1.setPosition(500, 800, 800);
 	cam.lookAt(ofVec3f(0));
 
 	// Pelvis is root Maybe we should have another point on torso?
@@ -151,18 +108,10 @@ void ofApp::setup(){
 	}
     
     gui = new ofxUISuperCanvas("Rokoko MoCap");
-    
-    vector<float> buffer;
-    for(int i = 0; i < 256; i++)
-    {
-        buffer.push_back(0.0);
-    }
-    
-    //gui->addLabel("MOVING GRAPH", OFX_UI_FONT_MEDIUM);
-    //mg = gui->addMovingGraph("MOVING", buffer, 256, 0.0, 1.0);
-
     gui->setPosition(0, 0);
     gui->autoSizeToFitWidgets();
+    
+    gui->addFPS();
     
 	ofAddListener(gui->newGUIEvent,this,&ofApp::guiEvent);
     
@@ -177,61 +126,17 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
 	
-    
-    if(serial.available() > 0) {
-        
-        vector<string> indata;
-        indata.clear();
-        string in = ofxGetSerialString(serial, '&');
-        indata = ofSplitString(in, "\n");
-        
-        
-        if(indata.size() == 3) {
-            
-            if(indata[0] == "DS") {
-                updateQuaternion(indata[1], &fusedQuaternion);
-                updateVector(indata[2], &residualAccel);
-                
-                if(!dataReceived) {
-                    state = 1;
-                    //This is the first time we get data
-                    firstData = ofGetElapsedTimeMillis();
-                    dataReceived = true;
-                    offset = residualAccel;
-                }
-        
-            }
-            indata.clear();
-        }
-        serial.flush();
+    for(int i=0; i<imus.size(); i++) {
+        imus[i]->update();
     }
-    
-    
-    if(dataReceived && (ofGetElapsedTimeMillis() - firstData) < calTime) {
-        
-        // calibration stage for 3 seconds
-        //calZeroVector = residualAccel;
-        offset = (offset * 59.0/60.0) + (residualAccel + 1.0/60.0);
-        
-        
-    } else if (dataReceived) {
-        state = 2;
-        // running stage
-        
-        residualAccel += (residualAccel - offset) * 0.0001;
-        velocity += residualAccel * 0.001;
-        position += velocity * 0.01;
-        
-        
-    }
-    
     
     //elbow->setOrientation(fusedQuaternion);
     
     //mg->addPoint(buffer[0]);
     //for(int i = 0; i < 256; i++) { buffer[i] = ofNoise(i/100.0, ofGetElapsedTimef()); }
     
-    mSkeleton["L_Elbow"]->setOrientation(fusedQuaternion);
+    mSkeleton["L_Shoulder"]->setOrientation(imus[1]->quaternion);
+    mSkeleton["L_Elbow"]->setOrientation(imus[0]->quaternion);
     
 }
 
@@ -285,7 +190,7 @@ void ofApp::draw(){
 	}
     
     
-    if(state==1){
+    /*if(state==1){
         ofSetColor(255, 255, 255);
         ofDrawBitmapString("Clibrating", 100,100);
     } else if(state == 2) {
@@ -294,7 +199,31 @@ void ofApp::draw(){
     } else if(state==0) {
         ofSetColor(255, 0, 0);
         ofDrawBitmapString("Waiting for data", 100,100);
+    }*/
+    
+    
+    
+    ofPushMatrix();
+    ofTranslate(200, 200);
+    for(int i=0; i<imus.size(); i++) {
+        
+        ofTranslate(0, i*80);
+        string str = ofToString(i) + ". Device: " + ofToString(imus[i]->deviceId);
+        
+        if(imus[i]->serial.isInitialized()) {
+            ofSetColor(0, 255, 0);
+            str += " Initialized.";
+        } else {
+            ofSetColor(255, 0, 0);
+            str += " Not Initialized.";
+        }
+        
+        ofDrawBitmapString(str, 0,0);
+        ofDrawBitmapString(ofToString(imus[i]->quaternion), 0, 20);
+        
+        
     }
+    ofPopMatrix();
 
 }
 
@@ -369,5 +298,6 @@ void ofApp::exit(){
 void ofApp::guiEvent(ofxUIEventArgs &e)
 {
 }
+
 
 

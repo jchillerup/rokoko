@@ -56,6 +56,7 @@
 		044BD7A318EC439C006FD670 /* tinyxml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 044BD79E18EC439C006FD670 /* tinyxml.cpp */; };
 		044BD7A418EC439C006FD670 /* tinyxmlerror.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 044BD7A018EC439C006FD670 /* tinyxmlerror.cpp */; };
 		044BD7A518EC439C006FD670 /* tinyxmlparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 044BD7A118EC439C006FD670 /* tinyxmlparser.cpp */; };
+		04FDAD0818F6D9C200D8D79A /* Imu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 04FDAD0618F6D9C200D8D79A /* Imu.cpp */; };
 		E4328149138ABC9F0047C5CB /* openFrameworksDebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4328148138ABC890047C5CB /* openFrameworksDebug.a */; };
 		E45BE97B0E8CC7DD009D7055 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9710E8CC7DD009D7055 /* AGL.framework */; };
 		E45BE97C0E8CC7DD009D7055 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9720E8CC7DD009D7055 /* ApplicationServices.framework */; };
@@ -208,6 +209,8 @@
 		044BD79F18EC439C006FD670 /* tinyxml.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tinyxml.h; sourceTree = "<group>"; };
 		044BD7A018EC439C006FD670 /* tinyxmlerror.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tinyxmlerror.cpp; sourceTree = "<group>"; };
 		044BD7A118EC439C006FD670 /* tinyxmlparser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tinyxmlparser.cpp; sourceTree = "<group>"; };
+		04FDAD0618F6D9C200D8D79A /* Imu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Imu.cpp; sourceTree = "<group>"; };
+		04FDAD0718F6D9C200D8D79A /* Imu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Imu.h; sourceTree = "<group>"; };
 		BBAB23BE13894E4700AA2426 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../libs/glut/lib/osx/GLUT.framework; sourceTree = "<group>"; };
 		E4328143138ABC890047C5CB /* openFrameworksLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = openFrameworksLib.xcodeproj; path = ../../../libs/openFrameworksCompiled/project/osx/openFrameworksLib.xcodeproj; sourceTree = SOURCE_ROOT; };
 		E45BE9710E8CC7DD009D7055 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
@@ -496,6 +499,8 @@
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				E4B69E1E0A3A1BDC003C02F2 /* ofApp.cpp */,
 				E4B69E1F0A3A1BDC003C02F2 /* ofApp.h */,
+				04FDAD0618F6D9C200D8D79A /* Imu.cpp */,
+				04FDAD0718F6D9C200D8D79A /* Imu.h */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;
@@ -607,6 +612,7 @@
 				044BD78F18EC215D006FD670 /* ofxUITabBar.cpp in Sources */,
 				044BD77718EC215D006FD670 /* ofxUIFPSSlider.cpp in Sources */,
 				044BD79518EC215D006FD670 /* ofxUIWaveform.cpp in Sources */,
+				04FDAD0818F6D9C200D8D79A /* Imu.cpp in Sources */,
 				044BD77118EC215D006FD670 /* ofxUICanvas.cpp in Sources */,
 				044BD77418EC215D006FD670 /* ofxUIDropDownList.cpp in Sources */,
 				044BD77218EC215D006FD670 /* ofxUICircleSlider.cpp in Sources */,

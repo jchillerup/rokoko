@@ -13,7 +13,6 @@ bool shouldDrawInfo = true;
 void ofApp::setup(){
 	
     serial.listDevices();
-    
     int serialAdresses [] = {0,2,4,6};
     
     for(int i=0; i<NUM_SENSORS; i++) {
@@ -22,9 +21,9 @@ void ofApp::setup(){
         imu->setup(serialAdresses[i]);
         
         imus.push_back(imu);
-        
     }
-	
+    
+    oscSender.setup("swing.local", 9999);
     
     //serial.setup(0, 57600);
     //serial.flush();
@@ -107,17 +106,9 @@ void ofApp::setup(){
 		it->second->setName(it->first);
 	}
     
-    gui = new ofxUISuperCanvas("Rokoko MoCap");
-    gui->setPosition(0, 0);
-    gui->autoSizeToFitWidgets();
-    
-    gui->addFPS();
-    
-	ofAddListener(gui->newGUIEvent,this,&ofApp::guiEvent);
-    
+
     position = ofVec3f(0,0,0);
     velocity = ofVec3f(0,0,0);
-    
     
 }
 
@@ -130,13 +121,28 @@ void ofApp::update(){
         imus[i]->update();
     }
     
-    //elbow->setOrientation(fusedQuaternion);
     
-    //mg->addPoint(buffer[0]);
-    //for(int i = 0; i < 256; i++) { buffer[i] = ofNoise(i/100.0, ofGetElapsedTimef()); }
+    for(int i=0; i<imus.size(); i++) {
+        
+        imus[i]->quaternion;
+        
+        ofxOscMessage m;
+        
+        m.setAddress("imu");
+        m.addIntArg(imus[i]->deviceId); //Todo: should not be device ID but a constant id locked to a body part
+        m.addFloatArg(imus[i]->quaternion.w());
+        m.addFloatArg(imus[i]->quaternion.x());
+        m.addFloatArg(imus[i]->quaternion.y());
+        m.addFloatArg(imus[i]->quaternion.z());
+        
+        oscSender.sendMessage(m);
+    }
     
-    mSkeleton["L_Shoulder"]->setOrientation(imus[1]->quaternion);
-    mSkeleton["L_Elbow"]->setOrientation(imus[0]->quaternion);
+    
+    if(debugdraw) {
+        mSkeleton["L_Shoulder"]->setOrientation(imus[1]->quaternion);
+        mSkeleton["L_Elbow"]->setOrientation(imus[0]->quaternion);
+    }
     
 }
 
@@ -145,85 +151,68 @@ void ofApp::draw(){
 	
 	ofEnableDepthTest();
 	
-	ofBackground(0);
     
-    ofNoFill();
-    ofSetColor(255);
-	cam.begin();
-    //ofDrawGrid(600);
+    if(debugdraw) {
+        
+        ofBackground(0);
+        ofNoFill();
+        ofSetColor(255);
+        cam.begin();
     
-	ofPushMatrix();
+        // ofDrawGrid(600);
+        ofPushMatrix(); {
     
-    ofTranslate(400, 0);
+            ofTranslate(400, 0);
+            
+            ofVec3f qaxis; float qangle;
+            fusedQuaternion.getRotate(qangle, qaxis);
+            ofRotate(qangle, qaxis.x, qaxis.y, qaxis.z);
+            
+            // ofDrawBox(0, 0, 0, 100, 100, 100);
+            
+            ofSetColor(0,0,200);
+            ofDrawCone(0, 0, 0, 10, 90);
     
-    ofVec3f qaxis; float qangle;
-    fusedQuaternion.getRotate(qangle, qaxis);
-    ofRotate(qangle, qaxis.x, qaxis.y, qaxis.z);
+        }ofPopMatrix();
     
-    //ofDrawBox(0, 0, 0, 100, 100, 100);
-    ofSetColor(0,0,200);
-    ofDrawCone(0, 0, 0, 10, 90);
+        ofPushMatrix();{
     
-	ofPopMatrix();
+            ofSetColor(255,255,255);
+            for (map<string, JointP_t>::iterator it = mSkeleton.begin(); it != mSkeleton.end(); ++it){
+                it->second->draw(10);
+            }
     
-    ofPushMatrix();
-    //  ofScale(3,3,3);
-    
-    ofSetColor(255,255,255);
-    
-    //hand->draw();
-    //elbow->draw();
-    //shoulder->draw();
-    
-    for (map<string, JointP_t>::iterator it = mSkeleton.begin(); it != mSkeleton.end(); ++it){
-		it->second->draw(10);
-	}
-    
-    ofPopMatrix();
+        }ofPopMatrix();
 	
-	cam.end();
+        cam.end();
     
-    if (shouldDrawLabels) {
-		for (map<string, JointP_t>::iterator it = mSkeleton.begin(); it != mSkeleton.end(); ++it){
-			ofDrawBitmapString(it->second->getName(), cam.worldToScreen(it->second->getGlobalPosition()) * ofVec3f(1,1,0) + ofVec3f(10,10));
-		}
-	}
-    
-    
-    /*if(state==1){
-        ofSetColor(255, 255, 255);
-        ofDrawBitmapString("Clibrating", 100,100);
-    } else if(state == 2) {
-        ofSetColor(0, 255, 0);
-        ofDrawBitmapString("Receiving data", 100,100);
-    } else if(state==0) {
-        ofSetColor(255, 0, 0);
-        ofDrawBitmapString("Waiting for data", 100,100);
-    }*/
-    
-    
-    
-    ofPushMatrix();
-    ofTranslate(120, 200);
-    for(int i=0; i<imus.size(); i++) {
-        
-        ofTranslate(0, i*80);
-        string str = ofToString(i) + ". Device: " + ofToString(imus[i]->deviceId);
-        
-        if(imus[i]->serial.isInitialized()) {
-            ofSetColor(0, 255, 0,150);
-            str += " Initialized.";
-        } else {
-            ofSetColor(255, 0, 0,150);
-            str += " Not Initialized.";
+        if (shouldDrawLabels) {
+            for (map<string, JointP_t>::iterator it = mSkeleton.begin(); it != mSkeleton.end(); ++it){
+                ofDrawBitmapString(it->second->getName(), cam.worldToScreen(it->second->getGlobalPosition()) * ofVec3f(1,1,0) + ofVec3f(10,10));
+            }
         }
-        
-        ofDrawBitmapString(str, 0,0);
-        ofDrawBitmapString(ofToString(imus[i]->quaternion), 0, 20);
-        
-        
     }
-    ofPopMatrix();
+    
+    ofPushMatrix(); {
+        ofTranslate(120, 200);
+        for(int i=0; i<imus.size(); i++) {
+            
+            ofTranslate(0, i*80);
+            string str = ofToString(i) + ". Device: " + ofToString(imus[i]->deviceId);
+            
+            if(imus[i]->serial.isInitialized()) {
+                ofSetColor(0, 255, 0,150);
+                str += " Initialized.";
+            } else {
+                ofSetColor(255, 0, 0,150);
+                str += " Not Initialized.";
+            }
+            
+            ofDrawBitmapString(str, 0,0);
+            ofDrawBitmapString(ofToString(imus[i]->quaternion), 0, 20);
+            
+        }
+    }ofPopMatrix();
 
 }
 
@@ -237,8 +226,8 @@ void ofApp::keyReleased(int key){
 	
 	
 	switch (key) {
-		case ' ':
-			animIsPaused ^= true;
+		case 'd':
+			debugdraw = !debugdraw;
 			break;
 		case 'i':
 			shouldDrawInfo ^= true;
@@ -292,12 +281,10 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
 }
 
 void ofApp::exit(){
-	serial.close();
+    
+    
 }
 
-void ofApp::guiEvent(ofxUIEventArgs &e)
-{
-}
 
 
 

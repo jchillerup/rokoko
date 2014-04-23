@@ -2,8 +2,8 @@
 
 #include "ofMain.h"
 #include "ofxSkeleton.h"
-#include "ofxUI.h"
 #include "Imu.h"
+#include "ofxOsc.h"
 
 #define NUM_SENSORS 2
 
@@ -57,11 +57,6 @@ public:
     
     ofEasyCam cam;
     
-    ofxUISuperCanvas *gui;
-    float *buffer;
-    ofxUIMovingGraph *mg;
-    void guiEvent(ofxUIEventArgs &e);
-    
     int long calTime = 10000;
     int long firstData = 0;
     bool dataReceived = false;
@@ -72,6 +67,9 @@ public:
     
     vector<Imu *> imus;
     
-	
+    bool debugdraw = false;
+    
+    ofxOscSender oscSender;
+    
 };
 

@@ -57,17 +57,17 @@ public:
     
     ofEasyCam cam;
     
-    int long calTime = 10000;
-    int long firstData = 0;
-    bool dataReceived = false;
+    int long calTime;
+    int long firstData;
+    bool dataReceived;
     
-    ofVec3f offset = ofVec3f(0,0,0);
+    ofVec3f offset;
     
-    int state = 0; // 0 waiting for data - 1 calibrating - 2 receiving - 3 error
+    int state;
     
     vector<Imu *> imus;
     
-    bool debugdraw = false;
+    bool debugdraw;
     
     ofxOscSender oscSender;
     

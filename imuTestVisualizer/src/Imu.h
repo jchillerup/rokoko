@@ -29,11 +29,11 @@ public:
     
     int deviceId;
     
-    int long calTime = 10000;
-    int long firstData = 0;
-    bool dataReceived = false;
+    int long calTime;
+    int long firstData;
+    bool dataReceived;
     
-    int state = 0;
+    int state;
     /*
      ofQuaternion rawQuarternion;
      ofVec3f rawGyro;

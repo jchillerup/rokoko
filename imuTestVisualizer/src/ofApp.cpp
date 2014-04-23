@@ -12,6 +12,16 @@ bool shouldDrawInfo = true;
 //--------------------------------------------------------------
 void ofApp::setup(){
 	
+    calTime = 10000;
+    firstData = 0;
+    dataReceived = false;
+    debugdraw = true;
+    
+    offset = ofVec3f(0,0,0);
+    
+    state = 0; // 0 waiting for data - 1 calibrating - 2 receiving - 3 error
+    
+    
     serial.listDevices();
     int serialAdresses [] = {0,2,4,6};
     

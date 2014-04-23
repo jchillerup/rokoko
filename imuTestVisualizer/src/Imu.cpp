@@ -74,6 +74,13 @@ void Imu::setup(int _deviceId) {
     
     serial.setup(deviceId, 57600);
     serial.flush();
+    
+    calTime = 10000;
+    firstData = 0;
+    dataReceived = false;
+    
+    state = 0;
+    
 }
 
 

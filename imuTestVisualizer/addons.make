@@ -1,4 +1,3 @@
 ofxSkeleton
 ofxXmlSettings
-ofxUI
 ofxOsc

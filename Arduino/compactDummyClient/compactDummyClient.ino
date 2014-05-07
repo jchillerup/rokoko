@@ -62,63 +62,45 @@ MPU9150Lib MPU;                                              // the MPU object
 
 MPUQuaternion gravity;                                     // this is our earth frame gravity vector
 
+double w = 0.3, x = 0, y = 0, z = -0.95;
+double xx = 0, yy = 0, zz = 0;
+
 void setup()
 {
   Serial.begin(SERIAL_PORT_SPEED);
   Serial.println("Accel9150 starting");
-  Wire.begin();
-  MPU.init(MPU_UPDATE_RATE, MPU_MAG_MIX_GYRO_AND_MAG, MAG_UPDATE_RATE, MPU_LPF_RATE);     // start the MPU
-
-  //  set up the initial gravity vector for quaternion rotation - max value down the z axis
-
-  gravity[QUAT_W] = 0;
-  gravity[QUAT_X] = 0;
-  gravity[QUAT_Y] = 0;
-  gravity[QUAT_Z] = SENSOR_RANGE;
 
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
-  
+
   delay(5);
 }
 
 void loop()
 {
-    MPUQuaternion rotatedGravity;                            // this is our body frame gravity vector
-    MPUQuaternion fusedConjugate;                            // this is the conjugate of the fused quaternion
-    MPUQuaternion qTemp;                                     // used in the rotation
+  Serial.write("DS");
+  Serial.write("\n");
+
+  // the fused quaternion
+  Serial.print(w += 0.04); Serial.write("!");
+  Serial.print(x += 0.01); Serial.write("!");
+  Serial.print(y += 0.02); Serial.write("!");
+  Serial.print(z += 0.00);
+
+  Serial.print("\n");
+
+  Serial.print(xx); Serial.write("!");
+  Serial.print(yy); Serial.write("!");
+  Serial.print(zz);
+
+  if ( w > 1.0 ) w -= 2.0;
+  if ( x > 1.0 ) x -= 2.0;
+  if ( y > 1.0 ) y -= 2.0;
+  if ( z > 1.0 ) z -= 2.0;
   
-    if (MPU.read()) {                                        // get the latest data
-    MPUQuaternionConjugate(MPU.m_fusedQuaternion, fusedConjugate);  // need this for the rotation
 
-    //  rotate the gravity vector into the body frame
-    MPUQuaternionMultiply(gravity, MPU.m_fusedQuaternion, qTemp);
-    MPUQuaternionMultiply(fusedConjugate, qTemp, rotatedGravity);
-
-    //  ## these variables are the values from the MPU ## //
-    Serial.write("DS");
-    Serial.write("\n");
-
-    // the fused quaternion
-    Serial.print(MPU.m_fusedQuaternion[QUAT_W]); Serial.write("!");
-    Serial.print(MPU.m_fusedQuaternion[QUAT_X]); Serial.write("!");
-    Serial.print(MPU.m_fusedQuaternion[QUAT_Y]); Serial.write("!");
-    Serial.print(MPU.m_fusedQuaternion[QUAT_Z]);
-
-    Serial.print("\n");
-
-    // the residual accelerations
-
-    //  now subtract rotated gravity from the body accels to get real accelerations
-    //  note that signs are reversed to get +ve acceleration results in the conventional axes.
-    Serial.print(-(MPU.m_calAccel[VEC3_X] - rotatedGravity[QUAT_X])); Serial.write("!");
-    Serial.print(-(MPU.m_calAccel[VEC3_Y] - rotatedGravity[QUAT_Y])); Serial.write("!");
-    Serial.print(-(MPU.m_calAccel[VEC3_Z] - rotatedGravity[QUAT_Z]));
-
-    // This should be integrated twice to the get the position
-    // http://www.varesano.net/blog/fabio/simple-gravity-compensation-9-dom-imus
-
-    Serial.write("&");
-  }
+  Serial.write("&");
+  
+  delay(100);
 }
 

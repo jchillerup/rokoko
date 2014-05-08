@@ -101,6 +101,6 @@ void loop()
 
   Serial.write("&");
   
-  delay(100);
+  delay(30);
 }
 

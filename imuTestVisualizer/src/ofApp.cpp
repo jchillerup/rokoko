@@ -143,11 +143,11 @@ void ofApp::update(){
 
 
   if(debugdraw) {
-    mSkeleton["L_Shoulder"]->setOrientation(imus[1]->quaternion);
     mSkeleton["L_Elbow"]->setOrientation(imus[0]->quaternion);
+    mSkeleton["R_Elbow"]->setOrientation(imus[1]->quaternion);
 
-    mSkeleton["R_Shoulder"]->setOrientation(imus[3]->quaternion);
-    mSkeleton["R_Elbow"]->setOrientation(imus[2]->quaternion);
+    mSkeleton["L_Knee"]->setOrientation(imus[2]->quaternion);
+    mSkeleton["R_Knee"]->setOrientation(imus[3]->quaternion);
 
     mSkeleton["Head"]->setOrientation(imus[4]->quaternion);
   }

@@ -41,11 +41,13 @@ string ofxGetSerialString(ofSerial &serial, char until) {
   }
 }
 
-void updateQuaternion(string str, ofQuaternion * quat, string delimiter = "!") {
+void Imu::updateQuaternion(string str, ofQuaternion * quat, string delimiter = "!") {
   if(str.length() > 3) {
     vector<string> floats = ofSplitString(str, delimiter);
     if(floats.size() == 4) {
       quat->set(ofToFloat(floats[0]), ofToFloat(floats[2]), -ofToFloat(floats[3]), ofToFloat(floats[1]));
+    } else {
+      cout << "List had fewer than four indices: " << str << ", " << deviceId << endl;
     }
   }
   //quat->set(ofToFloat(floats[0]), ofToFloat(floats[1]), ofToFloat(floats[2]), ofToFloat(floats[3]));

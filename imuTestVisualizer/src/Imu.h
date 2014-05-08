@@ -18,17 +18,13 @@ public:
     Imu();
     ~Imu();
     
-    ofQuaternion quaternion;
-    
+    ofQuaternion quaternion;    
     ofSerial serial;
-    
     void setup(int _deviceId);
-    
     void update();
-    
-    
+
     int deviceId;
-    
+
     int long calTime;
     int long firstData;
     bool dataReceived;

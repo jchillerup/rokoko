@@ -5,7 +5,7 @@
 #include "Imu.h"
 #include "ofxOsc.h"
 
-#define NUM_SENSORS 2
+#define NUM_SENSORS 5
 
 class ofApp : public ofBaseApp{
 	

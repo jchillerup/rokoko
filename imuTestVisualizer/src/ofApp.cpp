@@ -149,7 +149,7 @@ void ofApp::update(){
     mSkeleton["L_Knee"]->setOrientation(imus[2]->quaternion);
     mSkeleton["R_Knee"]->setOrientation(imus[3]->quaternion);
 
-    mSkeleton["Head"]->setOrientation(imus[4]->quaternion);
+    mSkeleton["Chest"]->setOrientation(imus[4]->quaternion);
   }
 
 }

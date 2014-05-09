@@ -2,7 +2,10 @@ import sys, signal, threading
 import serial
 from pythonosc import osc_message_builder, udp_client
 
-NODES = ["/dev/ttyACM6", "/dev/ttyACM7", "/dev/ttyACM8",  "/dev/ttyACM9", "/dev/ttyACM10",]
+NODES = ["/dev/ttyACM0", "/dev/ttyACM1", "/dev/ttyACM2",  "/dev/ttyACM3", "/dev/ttyACM4",]
+
+RECIPIENT = "10.13.37.111"
+PORT = 35000
 
 ports = []
 
@@ -73,7 +76,7 @@ class Port(threading.Thread):
         
 
 if __name__ == '__main__':
-    client = udp_client.UDPClient("127.0.0.1", 35000)
+    client = udp_client.UDPClient(RECIPIENT, PORT)
 
     for device in NODES:
         p = Port(device, client)

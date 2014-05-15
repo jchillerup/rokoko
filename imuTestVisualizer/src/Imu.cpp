@@ -73,6 +73,11 @@ Imu::~Imu() {
 }
 
 
+void Imu::toggleLED() {
+  serial.writeByte('l');
+  serial.writeByte(0x10);
+}
+
 void Imu::setup(int _deviceId) {
   deviceId = _deviceId;
 
@@ -84,6 +89,10 @@ void Imu::setup(int _deviceId) {
   dataReceived = false;
 
   state = 0;
+
+  // Tell the IMU to start sending measurements
+  serial.writeByte('g');
+  serial.writeByte(0x10);
 }
 
 

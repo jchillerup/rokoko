@@ -10,8 +10,7 @@ bool shouldDrawInfo = true;
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-  gui = new ofxUICanvas();
-  
+
   calTime = 10000;
   firstData = 0;
   dataReceived = false;
@@ -22,9 +21,6 @@ void ofApp::setup(){
   state = 0; // 0 waiting for data - 1 calibrating - 2 receiving - 3 error
 
   serial.listDevices();
-
-  vector<ofSerialDeviceInfo> devices = serial.getDeviceList();
-  
   int serialAdresses [] = {0,1,2,3,4};
 
   for(int i=0; i<NUM_SENSORS; i++) {
@@ -33,14 +29,9 @@ void ofApp::setup(){
     imu->setup(serialAdresses[i]);
 
     imus.push_back(imu);
-
-    gui->addLabel(devices.at(serialAdresses[i]).getDeviceName());
-    gui->addButton("Calibrate", false, 20, 20);
-    gui->addSpacer();
-  
   }
 
-  oscSender.setup("192.168.1.38", 12000);
+  oscSender.setup("localhost", 35000);
 
   //serial.setup(0, 57600);
   //serial.flush();
@@ -152,10 +143,13 @@ void ofApp::update(){
 
 
   if(debugdraw) {
-    mSkeleton["R_Shoulder"]->setOrientation(imus[0]->quaternion);
+    mSkeleton["L_Elbow"]->setOrientation(imus[0]->quaternion);
     mSkeleton["R_Elbow"]->setOrientation(imus[1]->quaternion);
-    mSkeleton["R_Hand"]->setOrientation(imus[2]->quaternion);
-    
+
+    mSkeleton["L_Knee"]->setOrientation(imus[2]->quaternion);
+    mSkeleton["R_Knee"]->setOrientation(imus[3]->quaternion);
+
+    mSkeleton["Chest"]->setOrientation(imus[4]->quaternion);
   }
 
 }
@@ -186,7 +180,7 @@ void ofApp::draw(){
 
       ofSetColor(0,0,200);
       ofDrawCone(0, 0, 0, 10, 90);
-      
+
     }ofPopMatrix();
 
     ofPushMatrix();{
@@ -212,7 +206,7 @@ void ofApp::draw(){
     for(int i=0; i<imus.size(); i++) {
 
       ofTranslate(0, 80);
-      string str = ofToString(i) + ". Device: " + ofToString(imus[i]->deviceName);
+      string str = ofToString(i) + ". Device: " + ofToString(imus[i]->deviceId);
 
       if(imus[i]->serial.isInitialized()) {
         ofSetColor(0, 255, 0,150);
@@ -224,7 +218,6 @@ void ofApp::draw(){
 
       ofDrawBitmapString(str, 0,0);
       ofDrawBitmapString(ofToString(imus[i]->quaternion), 0, 20);
-
     }
   }ofPopMatrix();
 }

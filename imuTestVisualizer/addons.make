@@ -1,3 +1,4 @@
 ofxSkeleton
 ofxXmlSettings
 ofxOsc
+ofxUI

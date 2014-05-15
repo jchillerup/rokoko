@@ -20,13 +20,11 @@ public:
     
     ofQuaternion quaternion;    
     ofSerial serial;
-    bool toggleLED();
     void setup(int _deviceId);
     void update();
 
     int deviceId;
-    string deviceName;
-    
+
     int long calTime;
     int long firstData;
     bool dataReceived;

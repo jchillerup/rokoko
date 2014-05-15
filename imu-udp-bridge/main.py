@@ -1,11 +1,17 @@
-import sys, signal, threading
+import sys, signal, threading, time
 import serial
 from pythonosc import osc_message_builder, udp_client
 
-NODES = ["/dev/ttyACM0", "/dev/ttyACM1", "/dev/ttyACM2",  "/dev/ttyACM3", "/dev/ttyACM4",]
+NODES = [
+    "/dev/ttyACM3",
+    "/dev/ttyACM4",
+    "/dev/ttyACM5",
+    "/dev/ttyACM6",
+    "/dev/ttyACM7",
+    ]
 
-RECIPIENT = "10.13.37.111"
-PORT = 35000
+RECIPIENT = "192.168.1.38"
+PORT = 14040
 
 ports = []
 
@@ -34,6 +40,8 @@ class Port(threading.Thread):
         self.shortname = devnode.split("/")[2]
         self.descriptor = serial.Serial(device, 57600)
         self.udp = udpclient
+
+        self.descriptor.write(b"g");
         
         self.sync()
 
@@ -52,12 +60,14 @@ class Port(threading.Thread):
         while cur != b'&':
             cur =  self.descriptor.read()
             reading += cur
-        
+
+
+#        print(str(reading))
         return str(reading)
 
     def get_osc(self):
         msg = osc_message_builder.OscMessageBuilder(address = ("/sensors/%s" % self.shortname))
-        msg.add_arg(self.get_reading(), osc_message_builder.OscMessageBuilder.ARG_TYPE_STRING)
+        msg.add_arg(self.get_reading().replace('\\n', '*'), osc_message_builder.OscMessageBuilder.ARG_TYPE_STRING)
 
         return msg.build()
 

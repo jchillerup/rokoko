@@ -73,9 +73,14 @@ Imu::~Imu() {
 }
 
 
-void Imu::toggleLED() {
-  serial.writeByte('l');
-  serial.writeByte(0x10);
+bool Imu::toggleLED() {
+  if (serial.isInitialized()) {
+    serial.writeByte('l');
+    serial.writeByte(0x10);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void Imu::setup(int _deviceId) {

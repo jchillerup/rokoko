@@ -218,6 +218,8 @@ void loop()
       case 'A':
         if (LOOPSTATE == CALIB_MAG || LOOPSTATE == CALIB_ACCEL) { break; }
         
+        Serial.println("Calibrating the accelerometer");
+        
         LOOPSTATE = CALIB_ACCEL;
         accelCalStart();
         endAtTime = millis() + 10*1000;
@@ -235,6 +237,8 @@ void loop()
       case 'm':
       case 'M':
         if (LOOPSTATE == CALIB_MAG || LOOPSTATE == CALIB_ACCEL) { break; }
+        
+        Serial.println("Calibrating the magnetometer");
         
         LOOPSTATE = CALIB_MAG;
         magCalStart();

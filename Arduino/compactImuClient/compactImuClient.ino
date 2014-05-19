@@ -70,14 +70,15 @@ MPU9150Lib MPU;                                              // the MPU object
 MPUQuaternion gravity;                                     // this is our earth frame gravity vector
 char LOOPSTATE = NOP;
 char LEDSTATE = LOW;
+int delayTime = 10;
 
 CALLIB_DATA calData;
 long endAtTime;  // Store the timestamp for when the calibrations should end.
+char * IDENTIFIER = "TESTID";
 
 void setup()
 {
   Serial.begin(SERIAL_PORT_SPEED);
-  Serial.println("Accel9150 starting");
   Wire.begin();
   calLibRead(0, &calData);
   
@@ -151,7 +152,7 @@ void accelCalLoop() {
 void accelCalSave() {
   calData.accelValid = true;
   calLibWrite(0, &calData);
-  Serial.println("Accel calibration data saved");  
+  Serial.println("AS");  
 }
 
 
@@ -206,19 +207,20 @@ void magCalLoop() {
 void magCalSave() {
   calData.magValid = true;
   calLibWrite(0, &calData);
-  Serial.println("Mag cal data saved");
+  Serial.println("MS");
 }
 
 
 void loop()
 {
+  char c;
   if (Serial.available()) {
-    switch (Serial.read()) {
+    switch (c = Serial.read()) {
       case 'a':
       case 'A':
         if (LOOPSTATE == CALIB_MAG || LOOPSTATE == CALIB_ACCEL) { break; }
         
-        Serial.println("Calibrating the accelerometer");
+        Serial.println("ca");
         
         LOOPSTATE = CALIB_ACCEL;
         accelCalStart();
@@ -229,7 +231,7 @@ void loop()
         }
         
         accelCalSave();
-        Serial.println("Calibrated the accelerometer");  
+        Serial.println("CA");  
   
         LOOPSTATE = NOP;      
         break;
@@ -238,7 +240,7 @@ void loop()
       case 'M':
         if (LOOPSTATE == CALIB_MAG || LOOPSTATE == CALIB_ACCEL) { break; }
         
-        Serial.println("Calibrating the magnetometer");
+        Serial.println("cm");
         
         LOOPSTATE = CALIB_MAG;
         magCalStart();
@@ -249,7 +251,7 @@ void loop()
         }
         
         magCalSave();
-        Serial.println("Calibrated the magnetometer");
+        Serial.println("CM");
         
         LOOPSTATE = NOP;
         break;
@@ -263,6 +265,24 @@ void loop()
       case 'L':
         LEDSTATE = LEDSTATE==HIGH?LOW:HIGH;
         digitalWrite(13, LEDSTATE);
+        break;
+        
+      case 'd':
+      case 'D':
+        delayTime += (c=='d'?-1:1)*5;    // multiply with -1 if d, multiply with 1 if D
+        if (delayTime < 0) { delayTime = 0; }
+        if (delayTime > 100) { delayTime = 100; }
+        
+        Serial.println(delayTime);
+        break;
+        
+      case 'i':
+        Serial.println(IDENTIFIER);
+        break;
+        
+      case 'I':
+        Serial.readBytesUntil('\n', IDENTIFIER, 8);
+        // TODO: Save to EEPROM
         break;
     }
   }
@@ -287,7 +307,7 @@ void loop()
     
         //  ## these variables are the values from the MPU ## //
         Serial.write("DS");
-        Serial.write("\n");
+        Serial.write('\n');
     
         // the fused quaternion
         Serial.print(MPU.m_fusedQuaternion[QUAT_W]); Serial.write("!");
@@ -295,7 +315,7 @@ void loop()
         Serial.print(MPU.m_fusedQuaternion[QUAT_Y]); Serial.write("!");
         Serial.print(MPU.m_fusedQuaternion[QUAT_Z]);
     
-        Serial.print("\n");
+        Serial.print('\n');
     
         // the residual accelerations
     
@@ -309,6 +329,7 @@ void loop()
         // http://www.varesano.net/blog/fabio/simple-gravity-compensation-9-dom-imus
     
         Serial.write("&");
+        delay(delayTime);
       }
     break;
   }

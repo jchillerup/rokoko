@@ -24,6 +24,8 @@ def signal_handler(signal, frame):
         
     for port in ports:
         port.close();
+
+    sys.exit(0);
         
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -118,13 +120,13 @@ if __name__ == '__main__':
 
         p.start()
 
-
     while True:
         for port in ports:
             print ("%s: %d packets" % (port.shortname, port.get_and_reset_num_packets()))
 
             time.sleep(1/len(NODES))
-            
+
+
     # while True:
     #     for port in ports:
     #         package = port.get_osc()

@@ -3,13 +3,17 @@ import serial
 from pythonosc import osc_message_builder, udp_client
 
 NODES = [
-    "/dev/ttyACM3",
-    "/dev/ttyACM4",
+    # "/dev/ttyACM3",
+    # "/dev/ttyACM4",
     # "/dev/ttyACM5",
     # "/dev/ttyACM6",
     # "/dev/ttyACM7,"
     ]
 
+with open("nodes", "r") as fp:
+    for line in fp:
+        NODES.append(line.rstrip())
+    
 RECIPIENT = "192.168.1.61"
 PORT = 14040
 
@@ -119,7 +123,7 @@ if __name__ == '__main__':
         for port in ports:
             print ("%s: %d packets" % (port.shortname, port.get_and_reset_num_packets()))
 
-        time.sleep(1)
+            time.sleep(time.sleep(1/len(NODES)))
             
     # while True:
     #     for port in ports:

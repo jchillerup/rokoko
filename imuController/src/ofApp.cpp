@@ -31,7 +31,7 @@ void ofApp::setup(){
   
   }
 
-  oscSender.setup("swing.local", 12000);
+  oscSender.setup("192.168.1.50", 14040);
   //serial.setup(0, 57600);
   //serial.flush();
 }
@@ -51,10 +51,10 @@ void ofApp::update(){
     m.setAddress("sensor");
     m.addStringArg("sensorname");
     //m.addIntArg(imus[i]->deviceId); //Todo: should not be device ID but a constant id locked to a body part
-    m.addFloatArg(imus[i]->quaternion.w());
     m.addFloatArg(imus[i]->quaternion.x());
     m.addFloatArg(imus[i]->quaternion.y());
     m.addFloatArg(imus[i]->quaternion.z());
+    m.addFloatArg(imus[i]->quaternion.w());
     oscSender.sendMessage(m);
   }
 

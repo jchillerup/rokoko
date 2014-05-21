@@ -123,7 +123,7 @@ if __name__ == '__main__':
         for port in ports:
             print ("%s: %d packets" % (port.shortname, port.get_and_reset_num_packets()))
 
-            time.sleep(time.sleep(1/len(NODES)))
+            time.sleep(1/len(NODES))
             
     # while True:
     #     for port in ports:

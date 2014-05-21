@@ -118,22 +118,24 @@ if __name__ == '__main__':
         p = Port(device, client)
         ports.append(p)
 
-        p.start()
-
-    while True:
-        for port in ports:
-            print ("%s: %d packets" % (port.shortname, port.get_and_reset_num_packets()))
-
-            time.sleep(1/len(NODES))
-
+        #p.start()
 
     # while True:
     #     for port in ports:
-    #         package = port.get_osc()
-    #         client.send(package)
-    #         num_packets += 1
+    #         print ("%s: %d packets" % (port.shortname, port.get_and_reset_num_packets()))
 
-    #         if num_packets % 100 == 0:
-    #             print ("Packet count: %d" % num_packets)
+    #         time.sleep(1/len(NODES))
+
+
+    while True:
+        num_packets = 0
+        
+        for port in ports:
+            package = port.get_osc()
+            client.send(package)
+            num_packets += 1
+
+            if num_packets % 100 == 0:
+                print ("Packet count: %d" % num_packets)
     
 

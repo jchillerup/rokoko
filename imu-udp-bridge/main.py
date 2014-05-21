@@ -70,7 +70,7 @@ class Port(threading.Thread):
         self.descriptor.write(b'g')
         reading = b""
 
-        for x in range(3)
+        for x in range(3):
             cur =  self.descriptor.readline()
             reading += cur
 

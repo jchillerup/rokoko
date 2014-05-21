@@ -8,7 +8,7 @@
 #include <lo/lo.h>
 
 #define RECIPIENT "192.168.1.50"
-
+#define DEBUG 1
 
 int main(int argc,char** argv)
 {
@@ -42,13 +42,11 @@ int main(int argc,char** argv)
   float * payload = malloc(4 * sizeof(float));
   lo_address recipient = lo_address_new(RECIPIENT, "14040");
   
-  while (num_packets < 10000)
+  while (DEBUG && num_packets < 1000)
     {
       // Write a 'g' to the Arduino
       write(tty_fd, &GET_READING_BYTE, 1);
 
-      //printf("%d\n", num_packets);
-      
       // Put the output from the Arduino in `payload'. `read' will block.
       read(tty_fd, payload, 16);
       num_packets++;
@@ -63,6 +61,9 @@ int main(int argc,char** argv)
         fail_packets++;
         continue;
       }
+
+      if (DEBUG)
+        printf("%.02f %.02f %.02f %.02f\n", payload[1], payload[2], payload[3], payload[0]);
 
       // Put the payload into an OSC message...
       lo_send(recipient, "/sensor", "sffff", sensor_devnode, payload[1], payload[2], payload[3], payload[0]);

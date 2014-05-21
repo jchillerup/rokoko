@@ -13,7 +13,6 @@ void ofApp::setup(){
   state = 0; // 0 waiting for data - 1 calibrating - 2 receiving - 3 error
 
   serial.listDevices();
-
   vector<ofSerialDeviceInfo> devices = serial.getDeviceList();
   
   int serialAdresses [] = {0
@@ -24,7 +23,7 @@ void ofApp::setup(){
   };
 
 
-  for(int i=0; i<NUM_SENSORS; i++) {
+  for(int i=0; i<devices.size(); i++) {
     Imu * imu = new Imu();
 
     imu->setup(serialAdresses[i]);

@@ -23,12 +23,12 @@ void ofApp::setup(){
   };
 
 
-  for(int i=0; i<devices.size(); i++) {
+  for(int i=0; i<NUM_SENSORS; i++) {
     Imu * imu = new Imu();
 
     imu->setup(serialAdresses[i]);
     imus.push_back(imu);
-  
+      
   }
 
   oscSender.setup("192.168.1.50", 14040);
@@ -49,12 +49,15 @@ void ofApp::update(){
     ofxOscMessage m;
     //m.setAddress("imu");
     m.setAddress("sensor");
-    m.addStringArg("sensorname");
+    m.addStringArg(imus[i]->deviceName);
     //m.addIntArg(imus[i]->deviceId); //Todo: should not be device ID but a constant id locked to a body part
     m.addFloatArg(imus[i]->quaternion.x());
     m.addFloatArg(imus[i]->quaternion.y());
     m.addFloatArg(imus[i]->quaternion.z());
     m.addFloatArg(imus[i]->quaternion.w());
+      
+    //printf("osc send");
+    
     oscSender.sendMessage(m);
   }
 

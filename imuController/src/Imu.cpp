@@ -31,7 +31,7 @@ void Imu::setup(int _deviceId) {
     deviceId = _deviceId;
     deviceName = serial.getDeviceList().at(deviceId).getDeviceName();
     
-    serial.setup(deviceId, 57600);
+    serial.setup(deviceId, 9600);
     serial.flush();
     
     serialSetup = true;
@@ -88,23 +88,25 @@ void Imu::update() {
         }
     }
     
+    bool good = true;
     float floats[4];
     float f;
     
     int br = 0;
     for(int i=0; i<4; i++) {
-        
         unsigned char bl[4];
         for (int b=0; b<4; b++) {
             bl[b] = bytes[br];
             br++;
         }
-        
         memcpy(&floats[i], &bl, sizeof(f));
+        
+        if(floats[i] > 1 || floats[i] < -1) good = false;
     }
     
-    quaternion.set(floats[0], floats[1], floats[2], floats[3]);
-    //cout<<floats[0]<<" "<<floats[1]<<" "<<floats[2]<<" "<<floats[2]<<endl;
-
+    if(good) {
+        quaternion.set(floats[0], floats[1], floats[2], floats[3]);
+        printf("%.02f %.02f %.02f %.02f \n", floats[0], floats[1], floats[2], floats[3]);
+    }
     
 }

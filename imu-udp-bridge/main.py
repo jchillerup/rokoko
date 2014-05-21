@@ -69,9 +69,9 @@ class Port(threading.Thread):
     def get_reading(self):
         self.descriptor.write(b'g')
         reading = b""
-        cur = 'x'
-        while cur != b'&':
-            cur =  self.descriptor.read()
+
+        for x in range(3)
+            cur =  self.descriptor.readline()
             reading += cur
 
         return str(reading)

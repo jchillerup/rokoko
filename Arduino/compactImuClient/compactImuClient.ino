@@ -328,7 +328,7 @@ void loop()
         // This should be integrated twice to the get the position
         // http://www.varesano.net/blog/fabio/simple-gravity-compensation-9-dom-imus
     
-        Serial.write("&");
+        Serial.write("&\n");
         //delay(delayTime);
         
         LOOPSTATE = NOP;

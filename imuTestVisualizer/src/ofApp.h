@@ -6,7 +6,7 @@
 #include "ofxOsc.h"
 #include "ofxUI.h"
 
-#define NUM_SENSORS 3
+#define NUM_SENSORS 1
 
 class ofApp : public ofBaseApp{
 	

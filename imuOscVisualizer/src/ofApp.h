@@ -1,12 +1,21 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxSkeleton.h"
 #include "Imu.h"
 #include "ofxOsc.h"
+#include "ofxUI.h"
 
-#define NUM_SENSORS 5
+#define NUM_SENSORS 1
 
 class ofApp : public ofBaseApp{
+	
+  typedef shared_ptr<pal::ofxSkeleton::ofxJoint>  JointP_t;
+	
+  //vector<JointP_t>							mSkeleton;
+	
+  ofEasyCam										mCam1;
+  map<string, JointP_t>							mSkeleton;
     
 
  public:
@@ -27,6 +36,28 @@ class ofApp : public ofBaseApp{
     
   ofSerial serial;
     
+  // data from IMU
+  ofQuaternion rawQuarternion;
+  ofVec3f rawGyro;
+  ofVec3f rawAccel;
+  ofVec3f rawMag;
+    
+  ofQuaternion dmpQuaternion;
+  ofVec3f dmpEulerPose;
+  ofVec3f calAccel;
+  ofVec3f calMag;
+    
+  ofQuaternion fusedQuaternion;
+  ofVec3f fusedEulerPose;
+    
+  ofVec3f residualAccel;
+  ofVec3f velocity;
+  ofVec3f position;
+    
+  ofVec3f calZeroVector;
+    
+  ofEasyCam cam;
+    
   int long calTime;
   int long firstData;
   bool dataReceived;
@@ -39,6 +70,7 @@ class ofApp : public ofBaseApp{
     
   bool debugdraw;
     
-  ofxOscSender oscSender;
+  ofxOscReceiver oscReceiver;
+  ofxUICanvas * gui;
 };
 

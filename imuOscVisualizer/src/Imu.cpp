@@ -83,7 +83,6 @@ void Imu::update() {
             {
                 // we read some data!
                 bytesRemaining -= result;
-                
             }
         }
     }
@@ -105,7 +104,7 @@ void Imu::update() {
     
     if(good) {
         quaternion.set(floats[0], floats[1], floats[2], floats[3]);
-        printf("%.02f %.02f %.02f %.02f \n", floats[0], floats[1], floats[2], floats[3]);
+        //printf("%.02f %.02f %.02f %.02f \n", floats[0], floats[1], floats[2], floats[3]);
     }
     
 }

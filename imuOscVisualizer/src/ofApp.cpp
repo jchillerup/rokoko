@@ -11,46 +11,8 @@ bool shouldDrawInfo = true;
 //--------------------------------------------------------------
 void ofApp::setup(){
   gui = new ofxUICanvas();
-  
-  calTime = 10000;
-  firstData = 0;
-  dataReceived = false;
-  debugdraw = true;
 
-  offset = ofVec3f(0,0,0);
-
-  state = 0; // 0 waiting for data - 1 calibrating - 2 receiving - 3 error
-
-  serial.listDevices();
-
-  vector<ofSerialDeviceInfo> devices = serial.getDeviceList();
-  
-  int serialAdresses [] = {0
-                           // ,1
-                           // ,2
-                           // ,3
-                           // ,4
-  };
-
-
-  
-  for(int i=0; i<NUM_SENSORS; i++) {
-    Imu * imu = new Imu();
-
-    imu->setup(serialAdresses[i]);
-
-    imus.push_back(imu);
-
-    gui->addLabel(devices.at(serialAdresses[i]).getDeviceName());
-    gui->addButton("Calibrate", false, 20, 20);
-    gui->addSpacer();
-  
-  }
-
-  oscSender.setup("192.168.1.38", 12000);
-
-  //serial.setup(0, 57600);
-  //serial.flush();
+  oscReceiver.setup(12000);
 
   animIsPaused = false;
   animCurrentFrame = 0;
@@ -137,33 +99,15 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
 
-  for(int i=0; i<imus.size(); i++) {
-    imus[i]->update();
-  }
+  
+  
 
-
-  for(int i=0; i<imus.size(); i++) {
-    imus[i]->quaternion;
-
-    ofxOscMessage m;
-
-    m.setAddress("sensor");
-    m.addStringArg("sensorname"); //Todo: should not be device ID but a constant id locked to a body part
-    m.addFloatArg(imus[i]->quaternion.w());
-    m.addFloatArg(imus[i]->quaternion.x());
-    m.addFloatArg(imus[i]->quaternion.y());
-    m.addFloatArg(imus[i]->quaternion.z());
-
-    oscSender.sendMessage(m);
-  }
-
-
-  if(debugdraw) {
+  //if(debugdraw) {
     mSkeleton["R_Shoulder"]->setOrientation(imus[0]->quaternion);
     // mSkeleton["R_Elbow"]->setOrientation(imus[1]->quaternion);
     // mSkeleton["R_Hand"]->setOrientation(imus[2]->quaternion);
     
-  }
+  //}
 
 }
 

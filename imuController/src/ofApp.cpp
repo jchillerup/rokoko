@@ -17,10 +17,10 @@ void ofApp::setup(){
   vector<ofSerialDeviceInfo> devices = serial.getDeviceList();
   
   int serialAdresses [] = {0
-                           // ,1
-                           // ,2
-                           // ,3
-                           // ,4
+                            ,1
+                            ,2
+                            ,3
+                            ,4
   };
 
 
@@ -48,8 +48,10 @@ void ofApp::update(){
     imus[i]->quaternion;
 
     ofxOscMessage m;
-    m.setAddress("imu");
-    m.addIntArg(imus[i]->deviceId); //Todo: should not be device ID but a constant id locked to a body part
+    //m.setAddress("imu");
+    m.setAddress("sensor");
+    m.addStringArg("sensorname");
+    //m.addIntArg(imus[i]->deviceId); //Todo: should not be device ID but a constant id locked to a body part
     m.addFloatArg(imus[i]->quaternion.w());
     m.addFloatArg(imus[i]->quaternion.x());
     m.addFloatArg(imus[i]->quaternion.y());

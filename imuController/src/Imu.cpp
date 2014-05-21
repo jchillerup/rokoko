@@ -100,13 +100,12 @@ void Imu::update() {
             br++;
         }
         memcpy(&floats[i], &bl, sizeof(f));
-        
-        if(floats[i] > 1 || floats[i] < -1) good = false;
+        if(floats[i] > 1 || floats[i] < -1 || floats[i] == NAN) good = false;
     }
     
     if(good) {
         quaternion.set(floats[0], floats[1], floats[2], floats[3]);
-        printf("%.02f %.02f %.02f %.02f \n", floats[0], floats[1], floats[2], floats[3]);
+        //printf("%.02f %.02f %.02f %.02f \n", floats[0], floats[1], floats[2], floats[3]);
     }
     
 }

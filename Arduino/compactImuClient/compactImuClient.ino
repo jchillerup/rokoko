@@ -38,12 +38,12 @@ MPU9150Lib MPU;                                              // the MPU object
 
 //  MPU_UPDATE_RATE defines the rate (in Hz) at which the MPU updates the sensor data and DMP output
 
-#define MPU_UPDATE_RATE  (20)
+#define MPU_UPDATE_RATE  (25)
 
 //  MAG_UPDATE_RATE defines the rate (in Hz) at which the MPU updates the magnetometer data
 //  MAG_UPDATE_RATE should be less than or equal to the MPU_UPDATE_RATE
 
-#define MAG_UPDATE_RATE  (10)
+#define MAG_UPDATE_RATE  (25)
 
 //  MPU_MAG_MIX defines the influence that the magnetometer has on the yaw output.
 //  The magnetometer itself is quite noisy so some mixing with the gyro yaw can help
@@ -58,7 +58,7 @@ MPU9150Lib MPU;                                              // the MPU object
 #define MPU_LPF_RATE   5
 
 //  SERIAL_PORT_SPEED defines the speed to use for the debug serial port
-#define  SERIAL_PORT_SPEED  57600
+#define  SERIAL_PORT_SPEED  9600
 
 
 #define NOP 0
@@ -304,26 +304,17 @@ void loop()
         //  rotate the gravity vector into the body frame
         MPUQuaternionMultiply(gravity, MPU.m_fusedQuaternion, qTemp);
         MPUQuaternionMultiply(fusedConjugate, qTemp, rotatedGravity);
-    
-        //  ## these variables are the values from the MPU ## //
-        Serial.write("DS");
-        Serial.write('\n');
-    
-        // the fused quaternion
-        Serial.print(MPU.m_fusedQuaternion[QUAT_W]); Serial.write("!");
-        Serial.print(MPU.m_fusedQuaternion[QUAT_X]); Serial.write("!");
-        Serial.print(MPU.m_fusedQuaternion[QUAT_Y]); Serial.write("!");
-        Serial.print(MPU.m_fusedQuaternion[QUAT_Z]);
-    
-        Serial.print('\n');
-    
-        // the residual accelerations
-    
+
+        // Send the quaternion data structure consisting of four floats.
+        Serial.write((byte*) MPU.m_fusedQuaternion, 4*sizeof(float));        
+
+        // the residual accelerations    
         //  now subtract rotated gravity from the body accels to get real accelerations
         //  note that signs are reversed to get +ve acceleration results in the conventional axes.
-        Serial.print(-(MPU.m_calAccel[VEC3_X] - rotatedGravity[QUAT_X])); Serial.write("!");
-        Serial.print(-(MPU.m_calAccel[VEC3_Y] - rotatedGravity[QUAT_Y])); Serial.write("!");
-        Serial.print(-(MPU.m_calAccel[VEC3_Z] - rotatedGravity[QUAT_Z]));
+        
+        // Serial.print(-(MPU.m_calAccel[VEC3_X] - rotatedGravity[QUAT_X])); Serial.write("!");
+        // Serial.print(-(MPU.m_calAccel[VEC3_Y] - rotatedGravity[QUAT_Y])); Serial.write("!");
+        // Serial.print(-(MPU.m_calAccel[VEC3_Z] - rotatedGravity[QUAT_Z]));
     
         // This should be integrated twice to the get the position
         // http://www.varesano.net/blog/fabio/simple-gravity-compensation-9-dom-imus

@@ -30,6 +30,7 @@ public:
     int long calTime;
     int long firstData;
     bool dataReceived;
+    bool serialSetup;
     
     int state;
     /*

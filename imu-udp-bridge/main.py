@@ -5,12 +5,12 @@ from pythonosc import osc_message_builder, udp_client
 NODES = [
     "/dev/ttyACM3",
     "/dev/ttyACM4",
-    "/dev/ttyACM5",
-    "/dev/ttyACM6",
-    "/dev/ttyACM7",
+    # "/dev/ttyACM5",
+    # "/dev/ttyACM6",
+    # "/dev/ttyACM7,"
     ]
 
-RECIPIENT = "192.168.1.38"
+RECIPIENT = "192.168.1.61"
 PORT = 14040
 
 ports = []
@@ -31,6 +31,8 @@ class Port(threading.Thread):
     in_sync = False
     is_running = True
     udp = None
+    identifier = None
+    num_packets_received = 0
     
     def __init__(self, devnode, udpclient):
         threading.Thread.__init__(self)
@@ -41,6 +43,10 @@ class Port(threading.Thread):
         self.descriptor = serial.Serial(device, 57600)
         self.udp = udpclient
 
+        self.identifier = str(self.get_identifier().rstrip())
+
+        print ("Identifier is: %s" % self.identifier)
+        
         self.descriptor.write(b"g");
         
         self.sync()
@@ -55,14 +61,13 @@ class Port(threading.Thread):
         self.in_sync = True
 
     def get_reading(self):
+        self.descriptor.write(b'g')
         reading = b""
         cur = 'x'
         while cur != b'&':
             cur =  self.descriptor.read()
             reading += cur
 
-
-#        print(str(reading))
         return str(reading)
 
     def get_osc(self):
@@ -71,10 +76,21 @@ class Port(threading.Thread):
 
         return msg.build()
 
+    def get_identifier(self):
+        self.descriptor.write(b"i")
+        reading = b""
+        cur = 'x'
+        while cur != b'\n':
+            cur =  self.descriptor.read()
+            reading += cur
+
+        return reading
+    
     def run(self):
         while self.is_running:
             if self.in_sync:
                 msg = self.get_osc()
+                self.num_packets_received += 1
                 self.udp.send(msg)
 
         print("should have died")
@@ -83,6 +99,10 @@ class Port(threading.Thread):
         self.is_running = False
         self._stop() # this is a hack
 
+    def get_and_reset_num_packets(self):
+        num = self.num_packets_received
+        self.num_packets_received = 0
+        return num
         
 
 if __name__ == '__main__':
@@ -93,9 +113,14 @@ if __name__ == '__main__':
         ports.append(p)
 
         p.start()
-        
-    num_packets = 0;
-        
+
+
+    while True:
+        for port in ports:
+            print ("%s: %d packets" % (port.shortname, port.get_and_reset_num_packets()))
+
+        time.sleep(1)
+            
     # while True:
     #     for port in ports:
     #         package = port.get_osc()

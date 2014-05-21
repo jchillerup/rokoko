@@ -329,7 +329,9 @@ void loop()
         // http://www.varesano.net/blog/fabio/simple-gravity-compensation-9-dom-imus
     
         Serial.write("&");
-        delay(delayTime);
+        //delay(delayTime);
+        
+        LOOPSTATE = NOP;
       }
     break;
   }

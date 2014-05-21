@@ -66,6 +66,7 @@ void updateVector(string str, ofVec3f * vec, string delimiter = "!") {
 
 
 Imu::Imu() {
+  serialSetup = false;
 }
 
 Imu::~Imu() {
@@ -90,6 +91,8 @@ void Imu::setup(int _deviceId) {
   serial.setup(deviceId, 57600);
   serial.flush();
 
+  serialSetup = true;
+  
   calTime = 10000;
   firstData = 0;
   dataReceived = false;
@@ -97,13 +100,17 @@ void Imu::setup(int _deviceId) {
   state = 0;
 
   // Tell the IMU to start sending measurements
-  serial.writeByte('g');
-  serial.writeByte(0x10);
+  // serial.writeByte('g');
+  // serial.writeByte(0x10);
 }
 
 
 void Imu::update() {
-  if(serial.available() > 0) {
+  if (!serialSetup) return;
+
+  serial.writeByte('g');
+  
+  if(true || serial.available() > 0) {
     vector<string> indata;
     indata.clear();
 

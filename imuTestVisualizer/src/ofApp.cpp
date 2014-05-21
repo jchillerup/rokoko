@@ -25,8 +25,15 @@ void ofApp::setup(){
 
   vector<ofSerialDeviceInfo> devices = serial.getDeviceList();
   
-  int serialAdresses [] = {0,1,2,3,4};
+  int serialAdresses [] = {0
+                           // ,1
+                           // ,2
+                           // ,3
+                           // ,4
+  };
 
+
+  
   for(int i=0; i<NUM_SENSORS; i++) {
     Imu * imu = new Imu();
 
@@ -153,8 +160,8 @@ void ofApp::update(){
 
   if(debugdraw) {
     mSkeleton["R_Shoulder"]->setOrientation(imus[0]->quaternion);
-    mSkeleton["R_Elbow"]->setOrientation(imus[1]->quaternion);
-    mSkeleton["R_Hand"]->setOrientation(imus[2]->quaternion);
+    // mSkeleton["R_Elbow"]->setOrientation(imus[1]->quaternion);
+    // mSkeleton["R_Hand"]->setOrientation(imus[2]->quaternion);
     
   }
 

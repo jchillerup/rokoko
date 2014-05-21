@@ -13,7 +13,7 @@ NODES = [
 with open("nodes", "r") as fp:
     for line in fp:
         NODES.append(line.rstrip())
-    
+
 RECIPIENT = "192.168.1.61"
 PORT = 14040
 
@@ -21,12 +21,12 @@ ports = []
 
 def signal_handler(signal, frame):
     print("Exiting gracefully")
-        
+
     for port in ports:
         port.close();
 
     sys.exit(0);
-        
+
 signal.signal(signal.SIGINT, signal_handler)
 
 
@@ -39,7 +39,7 @@ class Port(threading.Thread):
     udp = None
     identifier = None
     num_packets_received = 0
-    
+
     def __init__(self, devnode, udpclient):
         threading.Thread.__init__(self)
         print( "Opening %s" % devnode)
@@ -52,9 +52,9 @@ class Port(threading.Thread):
         self.identifier = str(self.get_identifier().rstrip())
 
         print ("Identifier is: %s" % self.identifier)
-        
+
         self.descriptor.write(b"g");
-        
+
         self.sync()
 
     def sync(self):
@@ -62,7 +62,7 @@ class Port(threading.Thread):
 
         while cur != b'&':
             cur = self.descriptor.read()
-            
+
         print ("Synced")
         self.in_sync = True
 
@@ -91,7 +91,7 @@ class Port(threading.Thread):
             reading += cur
 
         return reading
-    
+
     def run(self):
         while self.is_running:
             if self.in_sync:
@@ -100,7 +100,7 @@ class Port(threading.Thread):
                 self.udp.send(msg)
 
         print("should have died")
-    
+
     def close(self):
         self.is_running = False
         self._stop() # this is a hack
@@ -109,7 +109,7 @@ class Port(threading.Thread):
         num = self.num_packets_received
         self.num_packets_received = 0
         return num
-        
+
 
 if __name__ == '__main__':
     client = udp_client.UDPClient(RECIPIENT, PORT)
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     start = time.time();
     num_packets = 0
     while True:
-        
+
         for port in ports:
             package = port.get_osc()
             client.send(package)
@@ -138,5 +138,3 @@ if __name__ == '__main__':
 
             if num_packets % 100 == 0:
                 print ("Packet count: %d, %f seconds" % (num_packets, time.time()-start)
-    
-

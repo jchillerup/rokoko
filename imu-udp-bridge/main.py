@@ -128,8 +128,8 @@ if __name__ == '__main__':
 
 
     start = time.time();
+    num_packets = 0
     while True:
-        num_packets = 0
         
         for port in ports:
             package = port.get_osc()

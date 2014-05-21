@@ -137,4 +137,5 @@ if __name__ == '__main__':
             num_packets += 1
 
             if num_packets % 100 == 0:
-                print ("Packet count: %d, %f seconds" % (num_packets, time.time()-start)
+                elapsed = (time.time()-start)
+                print ("Packet count: %d, %f seconds, %f packets per second per node" % (num_packets, elapsed, num_packets/elapsed/len(ports)))

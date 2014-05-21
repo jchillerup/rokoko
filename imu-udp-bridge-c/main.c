@@ -9,7 +9,6 @@
 
 #define RECIPIENT "192.168.1.59"
 
-
 int main(int argc,char** argv)
 {
   struct termios tio;
@@ -42,14 +41,12 @@ int main(int argc,char** argv)
   float * payload = malloc(4 * sizeof(float));
   lo_address recipient = lo_address_new(RECIPIENT, "14040");
   
-  while (num_packets < 10000)
+  while (DEBUG && num_packets < 1000)
     {
       int read_out = 0;
       // Write a 'g' to the Arduino
       write(tty_fd, &GET_READING_BYTE, 1);
 
-      //printf("%d\n", num_packets);
-      
       // Put the output from the Arduino in `payload'. `read' will block.
       read_out = read(tty_fd, payload, 16);
       num_packets++;

@@ -13,7 +13,6 @@ void ofApp::setup(){
   state = 0; // 0 waiting for data - 1 calibrating - 2 receiving - 3 error
 
   serial.listDevices();
-
   vector<ofSerialDeviceInfo> devices = serial.getDeviceList();
   
   int serialAdresses [] = {0
@@ -24,7 +23,7 @@ void ofApp::setup(){
   };
 
 
-  for(int i=0; i<NUM_SENSORS; i++) {
+  for(int i=0; i<devices.size(); i++) {
     Imu * imu = new Imu();
 
     imu->setup(serialAdresses[i]);
@@ -32,7 +31,7 @@ void ofApp::setup(){
   
   }
 
-  oscSender.setup("swing.local", 12000);
+  oscSender.setup("192.168.1.50", 14040);
   //serial.setup(0, 57600);
   //serial.flush();
 }
@@ -52,10 +51,10 @@ void ofApp::update(){
     m.setAddress("sensor");
     m.addStringArg("sensorname");
     //m.addIntArg(imus[i]->deviceId); //Todo: should not be device ID but a constant id locked to a body part
-    m.addFloatArg(imus[i]->quaternion.w());
     m.addFloatArg(imus[i]->quaternion.x());
     m.addFloatArg(imus[i]->quaternion.y());
     m.addFloatArg(imus[i]->quaternion.z());
+    m.addFloatArg(imus[i]->quaternion.w());
     oscSender.sendMessage(m);
   }
 

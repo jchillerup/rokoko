@@ -127,8 +127,9 @@ if __name__ == '__main__':
     #         time.sleep(1/len(NODES))
 
 
+    start = time.time();
+    num_packets = 0
     while True:
-        num_packets = 0
         
         for port in ports:
             package = port.get_osc()
@@ -136,6 +137,6 @@ if __name__ == '__main__':
             num_packets += 1
 
             if num_packets % 100 == 0:
-                print ("Packet count: %d" % num_packets)
+                print ("Packet count: %d, %f seconds" % (num_packets, time.time()-start)
     
 

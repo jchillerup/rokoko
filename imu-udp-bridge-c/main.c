@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <assert.h>
 #include <termios.h>
 
 #include <lo/lo.h>
@@ -14,7 +15,9 @@ int main(int argc,char** argv)
   struct termios tio;
   int tty_fd;
   
-  unsigned char GET_READING_BYTE = 'g';
+  const unsigned char GET_READING_BYTE = 'g';
+  const unsigned char GET_IDENTIFIER_BYTE = 'i';
+  
   int num_packets = 0;
   int fail_packets = 0;
   
@@ -24,6 +27,7 @@ int main(int argc,char** argv)
   }
   
   char* sensor_devnode = argv[1];
+  char sensor_ident[16];
   
   memset(&tio,0,sizeof(tio));
   tio.c_iflag     = 0;
@@ -40,6 +44,12 @@ int main(int argc,char** argv)
   
   float * payload = malloc(4 * sizeof(float));
   lo_address recipient = lo_address_new(RECIPIENT, "14040");
+
+  write(tty_fd, &GET_IDENTIFIER_BYTE, 1);
+
+  assert(read(tty_fd, sensor_ident, 16) == 16);
+
+  printf("Sensor ident: %s\n", sensor_ident);
   
   // Loop if DEBUG is false OR if it's true and num_packets < 100
   while ( (DEBUG ^ 1) || (DEBUG && num_packets < 100) )
@@ -73,7 +83,7 @@ int main(int argc,char** argv)
         printf("%.2f, %.2f, %.2f, %.2f\n", payload[1], payload[2], payload[3], payload[0]);
 
       // Put the payload into an OSC message...
-      lo_send(recipient, "/sensor", "sffff", sensor_devnode, payload[1], payload[2], payload[3], payload[0]);
+      lo_send(recipient, "/sensor", "sffff", sensor_ident, payload[1], payload[2], payload[3], payload[0]);
     }
 
   printf("num_packets: %d, fail_packets: %d\n", num_packets, fail_packets);

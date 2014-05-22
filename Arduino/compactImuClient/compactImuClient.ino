@@ -74,10 +74,12 @@ int delayTime = 10;
 
 CALLIB_DATA calData;
 long endAtTime;  // Store the timestamp for when the calibrations should end.
-char * IDENTIFIER = "TESTID";
+char * IDENTIFIER = (char*) calloc(16, sizeof(byte));
 
 void setup()
 {
+  int ident_eeprom_address = sizeof(CALLIB_DATA);
+  
   Serial.begin(SERIAL_PORT_SPEED);
   Wire.begin();
   calLibRead(0, &calData);
@@ -96,6 +98,12 @@ void setup()
   gravity[QUAT_Z] = SENSOR_RANGE;
 
   pinMode(13, OUTPUT);
+  
+  // Reading the ident from EEPROM
+  byte *ptr = (byte *) IDENTIFIER;
+  for (byte i = 0; i < 16; i++)
+    *ptr++ = EEPROM.read(ident_eeprom_address + i);
+  
   
   delay(5);
 }
@@ -277,12 +285,20 @@ void loop()
         break;
         
       case 'i':
-        Serial.println(IDENTIFIER);
+        Serial.write(IDENTIFIER, 16);
+        
         break;
         
       case 'I':
-        Serial.readBytesUntil('\n', IDENTIFIER, 8);
-        // TODO: Save to EEPROM
+        Serial.readBytes(IDENTIFIER, 16);
+        // Put the identifier in the first 16 bytes after the calibration data
+        int eeprom_address = sizeof(CALLIB_DATA);
+
+        char* ptr = IDENTIFIER;
+        
+        for (byte i = 0; i < 16; i++)
+          EEPROM.write(eeprom_address + i, *ptr++);
+
         break;
     }
   }

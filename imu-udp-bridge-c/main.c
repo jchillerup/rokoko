@@ -8,6 +8,7 @@
 #include <lo/lo.h>
 
 #define RECIPIENT "192.168.1.59"
+#define DEBUG 1
 
 int main(int argc,char** argv)
 {
@@ -30,18 +31,18 @@ int main(int argc,char** argv)
   tio.c_oflag     = 0;
   tio.c_cflag     = CS8|CREAD|CLOCAL;           // 8n1, see termios.h for more information
   tio.c_lflag     = 0;
-  tio.c_cc[VMIN]  = 1;
+  tio.c_cc[VMIN]  = 16;
   tio.c_cc[VTIME] = 5;
 
-  tty_fd = open(sensor_devnode, O_RDWR);
-  cfsetospeed(&tio, B9600);            // 9600 baud
-  cfsetispeed(&tio, B9600);            // 9600 baud
+  tty_fd = open(sensor_devnode, O_RDWR | O_NOCTTY);
+  cfsetospeed(&tio, B115200);            // 115200 baud
+  cfsetispeed(&tio, B115200);            // 115200 baud
   tcsetattr(tty_fd, TCSANOW, &tio);
   
   float * payload = malloc(4 * sizeof(float));
   lo_address recipient = lo_address_new(RECIPIENT, "14040");
   
-  while (DEBUG && num_packets < 1000)
+  while (DEBUG && num_packets < 100)
     {
       int read_out = 0;
       // Write a 'g' to the Arduino
@@ -52,19 +53,21 @@ int main(int argc,char** argv)
       num_packets++;
 
       if (read_out < 16) {
+        printf("short read\n");
+        fail_packets++;
         continue;
       }
       
       // BUG: Sometimes the readings come out wrong. We filter these out (but really, the bug should be fixed)
-      if (
-          payload[0] > 1.0 || payload[0] < -1.0 ||
-          payload[1] > 1.0 || payload[1] < -1.0 ||
-          payload[2] > 1.0 || payload[2] < -1.0 ||
-          payload[3] > 1.0 || payload[3] < -1.0
-          ) {
-        fail_packets++;
-        continue;
-      }
+      /* if ( */
+      /*     payload[0] > 1.0 || payload[0] < -1.0 || */
+      /*     payload[1] > 1.0 || payload[1] < -1.0 || */
+      /*     payload[2] > 1.0 || payload[2] < -1.0 || */
+      /*     payload[3] > 1.0 || payload[3] < -1.0 */
+      /*     ) { */
+      /*   fail_packets++; */
+      /*   continue; */
+      /* } */
 
       printf("%.2f, %.2f, %.2f, %.2f\n", payload[1], payload[2], payload[3], payload[0]);
 

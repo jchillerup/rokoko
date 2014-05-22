@@ -58,7 +58,7 @@ MPU9150Lib MPU;                                              // the MPU object
 #define MPU_LPF_RATE   5
 
 //  SERIAL_PORT_SPEED defines the speed to use for the debug serial port
-#define  SERIAL_PORT_SPEED  9600
+#define  SERIAL_PORT_SPEED  115200
 
 
 #define NOP 0

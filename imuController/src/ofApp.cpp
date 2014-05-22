@@ -22,7 +22,6 @@ void ofApp::setup(){
                             ,4
   };
 
-
   for(int i=0; i<NUM_SENSORS; i++) {
     Imu * imu = new Imu();
 
@@ -44,7 +43,6 @@ void ofApp::update(){
   }
 
   for(int i=0; i<imus.size(); i++) {
-    imus[i]->quaternion;
 
     ofxOscMessage m;
     //m.setAddress("imu");
@@ -55,12 +53,10 @@ void ofApp::update(){
     m.addFloatArg(imus[i]->quaternion.y());
     m.addFloatArg(imus[i]->quaternion.z());
     m.addFloatArg(imus[i]->quaternion.w());
-      
     //printf("osc send");
     
     oscSender.sendMessage(m);
   }
-
 
 }
 

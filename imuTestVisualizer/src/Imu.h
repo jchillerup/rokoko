@@ -47,5 +47,5 @@ public:
      */
     
 private:
-    void updateQuaternion(string str, ofQuaternion * quat, string delimiter);
+    //void updateQuaternion(string str, ofQuaternion * quat, string delimiter);
 };

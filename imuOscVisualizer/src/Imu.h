@@ -19,7 +19,7 @@ public:
     ~Imu();
     
     ofQuaternion quaternion;    
-    ofSerial serial;
+    //ofSerial serial;
     bool toggleLED();
     void setup(int _deviceId);
     void update();

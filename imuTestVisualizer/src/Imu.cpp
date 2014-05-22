@@ -49,7 +49,6 @@ void Imu::update() {
     
     serial.writeByte('g');
     
-    
     // we want to read 16 bytes
     int bytesRequired = 16;
     unsigned char bytes[bytesRequired];

@@ -5,9 +5,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include <termios.h>
-
 #include <lo/lo.h>
-
 #include "settings.h"
 
 int main(int argc,char** argv)

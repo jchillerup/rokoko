@@ -68,7 +68,8 @@
 		044BD7A318EC439C006FD670 /* tinyxml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 044BD79E18EC439C006FD670 /* tinyxml.cpp */; };
 		044BD7A418EC439C006FD670 /* tinyxmlerror.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 044BD7A018EC439C006FD670 /* tinyxmlerror.cpp */; };
 		044BD7A518EC439C006FD670 /* tinyxmlparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 044BD7A118EC439C006FD670 /* tinyxmlparser.cpp */; };
-		04FDAD0818F6D9C200D8D79A /* Imu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 04FDAD0618F6D9C200D8D79A /* Imu.cpp */; };
+		045D7FC8192E22A90047167C /* ofxBiquadFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045D7FC4192E22A90047167C /* ofxBiquadFilter.cpp */; };
+		045D7FC9192E22A90047167C /* ofxBiquadFilterInstance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 045D7FC6192E22A90047167C /* ofxBiquadFilterInstance.cpp */; };
 		E4328149138ABC9F0047C5CB /* openFrameworksDebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4328148138ABC890047C5CB /* openFrameworksDebug.a */; };
 		E45BE97B0E8CC7DD009D7055 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9710E8CC7DD009D7055 /* AGL.framework */; };
 		E45BE97C0E8CC7DD009D7055 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9720E8CC7DD009D7055 /* ApplicationServices.framework */; };
@@ -253,8 +254,10 @@
 		044BD79F18EC439C006FD670 /* tinyxml.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tinyxml.h; sourceTree = "<group>"; };
 		044BD7A018EC439C006FD670 /* tinyxmlerror.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tinyxmlerror.cpp; sourceTree = "<group>"; };
 		044BD7A118EC439C006FD670 /* tinyxmlparser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tinyxmlparser.cpp; sourceTree = "<group>"; };
-		04FDAD0618F6D9C200D8D79A /* Imu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Imu.cpp; sourceTree = "<group>"; };
-		04FDAD0718F6D9C200D8D79A /* Imu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Imu.h; sourceTree = "<group>"; };
+		045D7FC4192E22A90047167C /* ofxBiquadFilter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ofxBiquadFilter.cpp; sourceTree = "<group>"; };
+		045D7FC5192E22A90047167C /* ofxBiquadFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ofxBiquadFilter.h; sourceTree = "<group>"; };
+		045D7FC6192E22A90047167C /* ofxBiquadFilterInstance.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ofxBiquadFilterInstance.cpp; sourceTree = "<group>"; };
+		045D7FC7192E22A90047167C /* ofxBiquadFilterInstance.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ofxBiquadFilterInstance.h; sourceTree = "<group>"; };
 		BBAB23BE13894E4700AA2426 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../libs/glut/lib/osx/GLUT.framework; sourceTree = "<group>"; };
 		E4328143138ABC890047C5CB /* openFrameworksLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = openFrameworksLib.xcodeproj; path = ../../../libs/openFrameworksCompiled/project/osx/openFrameworksLib.xcodeproj; sourceTree = SOURCE_ROOT; };
 		E45BE9710E8CC7DD009D7055 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
@@ -564,9 +567,30 @@
 			path = ../../../addons/ofxXmlSettings/libs;
 			sourceTree = "<group>";
 		};
+		045D7FC2192E22A90047167C /* ofxBiquadFilter */ = {
+			isa = PBXGroup;
+			children = (
+				045D7FC3192E22A90047167C /* src */,
+			);
+			name = ofxBiquadFilter;
+			sourceTree = "<group>";
+		};
+		045D7FC3192E22A90047167C /* src */ = {
+			isa = PBXGroup;
+			children = (
+				045D7FC4192E22A90047167C /* ofxBiquadFilter.cpp */,
+				045D7FC5192E22A90047167C /* ofxBiquadFilter.h */,
+				045D7FC6192E22A90047167C /* ofxBiquadFilterInstance.cpp */,
+				045D7FC7192E22A90047167C /* ofxBiquadFilterInstance.h */,
+			);
+			name = src;
+			path = ../../../addons/ofxBiquadFilter/src;
+			sourceTree = "<group>";
+		};
 		BB4B014C10F69532006C3DED /* addons */ = {
 			isa = PBXGroup;
 			children = (
+				045D7FC2192E22A90047167C /* ofxBiquadFilter */,
 				0443202C192CD83000059A2A /* ofxUI */,
 				041941AE18FD857800157C60 /* ofxOsc */,
 				044BD79918EC439C006FD670 /* ofxXmlSettings */,
@@ -641,8 +665,6 @@
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				E4B69E1E0A3A1BDC003C02F2 /* ofApp.cpp */,
 				E4B69E1F0A3A1BDC003C02F2 /* ofApp.h */,
-				04FDAD0618F6D9C200D8D79A /* Imu.cpp */,
-				04FDAD0718F6D9C200D8D79A /* Imu.h */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;
@@ -750,13 +772,14 @@
 				041941D918FD857800157C60 /* ofxOscBundle.cpp in Sources */,
 				044320AE192CD83000059A2A /* ofxUISuperCanvas.cpp in Sources */,
 				044320B4192CD83000059A2A /* ofxUIValuePlotter.cpp in Sources */,
+				045D7FC9192E22A90047167C /* ofxBiquadFilterInstance.cpp in Sources */,
 				044320A5192CD83000059A2A /* ofxUIRadio.cpp in Sources */,
 				041941E318FD857800157C60 /* OscReceivedElements.cpp in Sources */,
 				044320A9192CD83000059A2A /* ofxUIScrollableCanvas.cpp in Sources */,
 				0443208D192CD83000059A2A /* ofxUI2DPad.cpp in Sources */,
 				044320A3192CD83000059A2A /* ofxUIMultiImageToggle.cpp in Sources */,
-				04FDAD0818F6D9C200D8D79A /* Imu.cpp in Sources */,
 				041941DE18FD857800157C60 /* IpEndpointName.cpp in Sources */,
+				045D7FC8192E22A90047167C /* ofxBiquadFilter.cpp in Sources */,
 				04432094192CD83000059A2A /* ofxUIDropDownList.cpp in Sources */,
 				041941DD18FD857800157C60 /* ofxOscSender.cpp in Sources */,
 				041941E218FD857800157C60 /* OscPrintReceivedElements.cpp in Sources */,

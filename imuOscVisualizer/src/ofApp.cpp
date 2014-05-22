@@ -7,12 +7,11 @@ bool animIsPaused = false;
 bool shouldDrawLabels = false;
 bool shouldDrawInfo = true;
 
-
 //--------------------------------------------------------------
 void ofApp::setup(){
   gui = new ofxUICanvas();
 
-  oscReceiver.setup(12000);
+  oscReceiver.setup(14040);
 
   animIsPaused = false;
   animCurrentFrame = 0;
@@ -25,9 +24,10 @@ void ofApp::setup(){
   cam.lookAt(ofVec3f(0));
 
   // Pelvis is root Maybe we should have another point on torso?
+    
   mSkeleton["Pelvis"] = JointP_t(new ofxJoint());
   mSkeleton["Pelvis"]->setGlobalPosition(ofVec3f(0));
-
+    
   mSkeleton["Chest"] = JointP_t(new ofxJoint());
   mSkeleton["Chest"]->setParent(mSkeleton["Pelvis"]);
   mSkeleton["Chest"]->setPosition(ofVec3f(0, 100 , 0 ));
@@ -62,35 +62,44 @@ void ofApp::setup(){
   mSkeleton["R_Toe"]->setPosition(ofVec3f(0, -5, 20));
 
 
-  string namesUpper[4] = {"Shoulder", "Elbow", "Hand", "Finger"};
+ /* string namesUpper[4] = {"Shoulder", "Elbow", "Hand", "Finger"};
   for (int i = 0; i < 4; i++){
     mSkeleton["L_" + namesUpper[i]] = JointP_t(new ofxJoint());
     mSkeleton["R_" + namesUpper[i]] = JointP_t(new ofxJoint());
-  }
+  }*/
+    
+    mSkeleton["01"] = JointP_t(new ofxJoint());
+    mSkeleton["02"] = JointP_t(new ofxJoint());
+    mSkeleton["03"] = JointP_t(new ofxJoint());
+    mSkeleton["04"] = JointP_t(new ofxJoint());
+    mSkeleton["05"] = JointP_t(new ofxJoint());
+    mSkeleton["06"] = JointP_t(new ofxJoint());
+    mSkeleton["07"] = JointP_t(new ofxJoint());
+    mSkeleton["08"] = JointP_t(new ofxJoint());
 
   // apply a limb's hierarchy
-  mSkeleton["L_Finger"]->bone(mSkeleton["L_Hand"])->bone(mSkeleton["L_Elbow"])->bone(mSkeleton["L_Shoulder"])->bone(mSkeleton["Chest"]);
+  mSkeleton["04"]->bone(mSkeleton["03"])->bone(mSkeleton["02"])->bone(mSkeleton["01"])->bone(mSkeleton["Chest"]);
 
-  mSkeleton["R_Finger"]->bone(mSkeleton["R_Hand"])->bone(mSkeleton["R_Elbow"])->bone(mSkeleton["R_Shoulder"])->bone(mSkeleton["Chest"]);
+  mSkeleton["08"]->bone(mSkeleton["07"])->bone(mSkeleton["06"])->bone(mSkeleton["05"])->bone(mSkeleton["Chest"]);
 
   // set the limb's joints positions
-  mSkeleton["L_Shoulder"]->setGlobalPosition(ofVec3f(-60, 100, 0 ));
-  mSkeleton["L_Shoulder"]->setOrientation(ofQuaternion(20 - 40, ofVec3f(0,1,0)));
-  mSkeleton["L_Elbow"]->setPosition(ofVec3f(-20, -80, 0));
-  mSkeleton["L_Hand"]->setPosition(ofVec3f(0, -80, 0));
-  mSkeleton["L_Finger"]->setPosition(ofVec3f(0, -20, 0));
+  mSkeleton["01"]->setGlobalPosition(ofVec3f(-60, 100, 0 ));
+  mSkeleton["01"]->setOrientation(ofQuaternion(20 - 40, ofVec3f(0,1,0)));
+  mSkeleton["02"]->setPosition(ofVec3f(-20, -80, 0));
+  mSkeleton["03"]->setPosition(ofVec3f(0, -80, 0));
+  mSkeleton["04"]->setPosition(ofVec3f(0, -20, 0));
 
-  mSkeleton["R_Shoulder"]->setGlobalPosition(ofVec3f(60, 100, 0 ));
-  mSkeleton["R_Shoulder"]->setOrientation(ofQuaternion(20 - 40, ofVec3f(0,-1,0)));
-  mSkeleton["R_Elbow"]->setPosition(ofVec3f(20, -80, 0));
-  mSkeleton["R_Hand"]->setPosition(ofVec3f(0, -80, 0));
-  mSkeleton["R_Finger"]->setPosition(ofVec3f(0, -20, 0));
+  mSkeleton["05"]->setGlobalPosition(ofVec3f(60, 100, 0 ));
+  mSkeleton["05"]->setOrientation(ofQuaternion(20 - 40, ofVec3f(0,-1,0)));
+  mSkeleton["06"]->setPosition(ofVec3f(20, -80, 0));
+  mSkeleton["07"]->setPosition(ofVec3f(0, -80, 0));
+  mSkeleton["08"]->setPosition(ofVec3f(0, -20, 0));
 
   // set joint names according to their map indices.
   for (map<string, JointP_t>::iterator it = mSkeleton.begin(); it != mSkeleton.end(); ++it){
     it->second->setName(it->first);
+    filters[it->first] = BQF(new ofxBiquadFilter4f(OFX_BIQUAD_TYPE_LOWPASS, 0.5, 0.7, 0.0));
   }
-
 
   position = ofVec3f(0,0,0);
   velocity = ofVec3f(0,0,0);
@@ -99,13 +108,52 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
 
+    while(oscReceiver.hasWaitingMessages()) {
+        ofxOscMessage m;
+        oscReceiver.getNextMessage(&m);
+        
+        //cout<<" "<<m.getAddress()<<" "<<m.getArgAsString(0)<<endl;
+        
+        if(m.getAddress() == "/sensor") {
+            
+            ofVec4f q = ofVec4f(m.getArgAsFloat(4), m.getArgAsFloat(1), m.getArgAsFloat(2), m.getArgAsFloat(3));
+            string id = m.getArgAsString(0).substr(0,2);
+            
+            mSkeleton[id]->setOrientation(filters[id]->update(q));
+            
+           /* if(string("01").compare(0,2,m.getArgAsString(0))) {
+                mSkeleton["01"]->setOrientation(q);
+                
+            } else if (string("02").compare(0,2,m.getArgAsString(0))) {
+                mSkeleton["02"]->setOrientation(q);
+            } else if (string("03").compare(0,2,m.getArgAsString(0))) {
+                mSkeleton["03"]->setOrientation(q);
+            } else if (string("04").compare(0,2,m.getArgAsString(0))) {
+                mSkeleton["04"]->setOrientation(q);
+            } else if (string("05").compare(0,2,m.getArgAsString(0))) {
+                mSkeleton["05"]->setOrientation(q);
+            } else if (string("06").compare(0,2,m.getArgAsString(0))) {
+                mSkeleton["06"]->setOrientation(q);
+            } else if (string("07").compare(0,2,m.getArgAsString(0))) {
+                mSkeleton["07"]->setOrientation(q);
+            }*/
+            
+            //cout<<q<<endl;
+            
+        }
+        
+        
+    }
   
-  
-
+    /*for (map<string, JointP_t>::iterator it = mSkeleton.begin(); it != mSkeleton.end(); ++it){
+        it->second->setOrientation(filters[it->first])
+        
+    }*/
+    
   //if(debugdraw) {
-    mSkeleton["R_Shoulder"]->setOrientation(imus[0]->quaternion);
-    // mSkeleton["R_Elbow"]->setOrientation(imus[1]->quaternion);
-    // mSkeleton["R_Hand"]->setOrientation(imus[2]->quaternion);
+    //mSkeleton["05"]->setOrientation(imus[0]->quaternion);
+    // mSkeleton["06"]->setOrientation(imus[1]->quaternion);
+    // mSkeleton["07"]->setOrientation(imus[2]->quaternion);
     
   //}
 
@@ -133,8 +181,6 @@ void ofApp::draw(){
       fusedQuaternion.getRotate(qangle, qaxis);
       ofRotate(qangle, qaxis.x, qaxis.y, qaxis.z);
 
-      // ofDrawBox(0, 0, 0, 100, 100, 100);
-
       ofSetColor(0,0,200);
       ofDrawCone(0, 0, 0, 10, 90);
       
@@ -158,26 +204,6 @@ void ofApp::draw(){
     }
   }
 
-  ofPushMatrix(); {
-    ofTranslate(120, 200);
-    for(int i=0; i<imus.size(); i++) {
-
-      ofTranslate(0, 80);
-      string str = ofToString(i) + ". Device: " + ofToString(imus[i]->deviceName);
-
-      if(imus[i]->serial.isInitialized()) {
-        ofSetColor(0, 255, 0,150);
-        str += " Initialized.";
-      } else {
-        ofSetColor(255, 0, 0,150);
-        str += " Not Initialized.";
-      }
-
-      ofDrawBitmapString(str, 0,0);
-      ofDrawBitmapString(ofToString(imus[i]->quaternion), 0, 20);
-
-    }
-  }ofPopMatrix();
 }
 
 //--------------------------------------------------------------

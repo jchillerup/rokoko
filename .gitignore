@@ -13,3 +13,11 @@ build/
 
 xcuserdata
 bin/
+obj/
+
+*~
+\#*\#
+.\#*
+__pycache__/
+imu-udp-bridge-c/main
+imu-udp-bridge-c/settings.h

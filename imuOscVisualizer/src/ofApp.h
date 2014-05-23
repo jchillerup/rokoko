@@ -5,18 +5,21 @@
 #include "Imu.h"
 #include "ofxOsc.h"
 #include "ofxUI.h"
+#include "ofxBiquadFilter.h"
 
 #define NUM_SENSORS 1
+
 
 class ofApp : public ofBaseApp{
 	
   typedef shared_ptr<pal::ofxSkeleton::ofxJoint>  JointP_t;
-	
-  //vector<JointP_t>							mSkeleton;
-	
-  ofEasyCam										mCam1;
-  map<string, JointP_t>							mSkeleton;
+  typedef shared_ptr<ofxBiquadFilter4f>  BQF;
+
     
+  //vector<JointP_t>							mSkeleton;
+  ofEasyCam										mCam1;
+  map<string, JointP_t>		mSkeleton;
+  map<string, BQF> filters;
 
  public:
   void setup();

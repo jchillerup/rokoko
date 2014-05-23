@@ -7,9 +7,9 @@ class IMU:
     def __init__(self, devnode):
         self.descriptor = serial.Serial(devnode, 115200)
 
-        self.get_identifier()
+        # self.get_identifier()
         
-        print ("Connected to: %s" % self.identifier)
+        # print ("Connected to: %s" % self.identifier)
 
     def get_reading(self):
         self.descriptor.write(b'g')

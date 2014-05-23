@@ -47,7 +47,7 @@ void ofApp::setup(){
   
   }
 
-  oscSender.setup("192.168.1.38", 12000);
+  oscSender.setup("localhost", 14040);
 
   //serial.setup(0, 57600);
   //serial.flush();

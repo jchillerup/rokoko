@@ -31,7 +31,7 @@ void Imu::setup(int _deviceId) {
     deviceId = _deviceId;
     deviceName = serial.getDeviceList().at(deviceId).getDeviceName();
     
-    serial.setup(deviceId, 9600);
+    serial.setup(deviceId, 115200);
     serial.flush();
     
     serialSetup = true;

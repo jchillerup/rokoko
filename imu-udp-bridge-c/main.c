@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <termios.h>
 #include <lo/lo.h>
+#include <pthread.h>
 #include "settings.h"
 
 // Sets up a device for dumping data. Returns a file descriptor
@@ -65,28 +66,39 @@ void work_sensor(int tty_fd, lo_address* recipient) {
   free(payload);
 }
 
+void prepare_terminal(struct termios * tio) {
+  memset(tio, 0, sizeof(*tio));
+  tio->c_iflag     = 0;
+  tio->c_oflag     = 0;
+  tio->c_cflag     = CS8|CREAD|CLOCAL;           // 8n1, see termios.h for more information
+  tio->c_lflag     = 0;
+  tio->c_cc[VMIN]  = 16;
+  tio->c_cc[VTIME] = 5;
+}
+
 int main(int argc,char** argv)
 {
+  // We allocate as many threads as we have arguments for the program, one for each device
+  // to handle.
+  pthread_t threads[ argc - 1 ];
+  int i;
+  struct termios tio;
   
   if (argc == 1) {
     printf("No device node(s) given\n");
     return(255);
   }
   
+  prepare_terminal(&tio);
   
-  struct termios tio;
-  memset(&tio,0,sizeof(tio));
-  tio.c_iflag     = 0;
-  tio.c_oflag     = 0;
-  tio.c_cflag     = CS8|CREAD|CLOCAL;           // 8n1, see termios.h for more information
-  tio.c_lflag     = 0;
-  tio.c_cc[VMIN]  = 16;
-  tio.c_cc[VTIME] = 5;
-
-  int fd               = open_device(argv[1], &tio);
-  lo_address recipient = lo_address_new(RECIPIENT, "14040");
-  work_sensor(fd, &recipient);
-  close(fd);
+  for (i = 1; i < argc; i++) {
+    printf("Opening %s\n", argv[i]);
+    
+    int fd               = open_device(argv[i], &tio);
+    lo_address recipient = lo_address_new(RECIPIENT, "14040");
+    work_sensor(fd, &recipient);
+    close(fd);
+  }
   
   return EXIT_SUCCESS;
 }

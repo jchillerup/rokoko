@@ -1,2 +1,5 @@
+debug:
+	gcc -g -pthread -llo -O2 -o main main.c
+
 default:
-	gcc -llo -O2 -o main main.c
+	gcc -pthread -llo -O2 -o main main.c

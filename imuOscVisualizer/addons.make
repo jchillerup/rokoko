@@ -2,3 +2,4 @@ ofxSkeleton
 ofxXmlSettings
 ofxOsc
 ofxUI
+ofxBiquadFilter

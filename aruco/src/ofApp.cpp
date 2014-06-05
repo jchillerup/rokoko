@@ -10,10 +10,10 @@ void drawMarker(float size, const ofColor & color){
     ofTranslate(0,size*0.5,0);
     ofFill();
     ofSetColor(color,50);
-    ofBox(size);
+    ofDrawBox(size);
     ofNoFill();
     ofSetColor(color);
-    ofBox(size);
+    ofDrawBox(size);
 	ofPopMatrix();
 }
 
@@ -28,7 +28,7 @@ void testApp::setup(){
 		player.play();
 		video = &player;
 	}else{
-		grabber.setDeviceID(0   );
+		grabber.setDeviceID(1);
 		grabber.initGrabber(640,480);
 		video = &grabber;
 	}
@@ -47,6 +47,13 @@ void testApp::setup(){
 	ofPixels pixels;
 	ofBitmapStringGetTextureRef().readToPixels(pixels);
 	ofSaveImage(pixels,"font.bmp");
+    
+    camFbo.allocate(grabber.getWidth(), grabber.getHeight());
+    worldFbo.allocate(grabber.getWidth(), grabber.getHeight());
+    
+    sender.setup("192.168.0.108", 14040);
+    
+    
 }
 
 //--------------------------------------------------------------
@@ -54,15 +61,44 @@ void testApp::update(){
 	video->update();
 	if(video->isFrameNew()){
 		aruco.detectBoard(video->getPixelsRef());
+        
+        
+        ofxOscMessage m;
+        
+        ofxCv::Mat rvec = aruco.getBoard().Rvec;
+        ofxCv::Mat tvec = aruco.getBoard().Tvec;
+        
+        //rvec
+        
+        m.addFloatArg(rvec.at<float>(0));
+        m.addFloatArg(rvec.at<float>(1));
+        m.addFloatArg(rvec.at<float>(2));
+        
+        m.addFloatArg(tvec.at<float>(3));
+        m.addFloatArg(tvec.at<float>(4));
+        m.addFloatArg(tvec.at<float>(5));
+        
+        //m.addFloatArg(tvec);
+        
+        sender.sendMessage(m);
+        
+        
 	}
 }
 
 //--------------------------------------------------------------
 void testApp::draw(){
 	ofSetColor(255);
-	video->draw(0,0);
     
-	//aruco.draw();
+    camFbo.begin();
+    
+    ofSetColor(255);
+    
+    ofTranslate(camFbo.getWidth()/2, camFbo.getHeight()/2);
+    ofRotateX(180);
+    ofTranslate(-camFbo.getWidth()/2, -camFbo.getHeight()/2);
+	video->draw(0,0);
+    ofRotateX(-180);
     
 	if(showMarkers){
 		for(int i=0;i<aruco.getNumMarkers();i++){
@@ -72,18 +108,70 @@ void testApp::draw(){
 		}
 	}
     
-    
 	if(showBoard && aruco.getBoardProbability()>0.03){
 		aruco.beginBoard();
 		drawMarker(.5,ofColor::red);
 		aruco.end();
 	}
-	
     
-	ofSetColor(255);
-	if(showBoardImage){
-    	board.draw(ofGetWidth()-320,0,320,320*float(board.getHeight())/float(board.getWidth()));
-    }
+    camFbo.end();
+    
+    
+    worldFbo.begin();
+    
+    ofBackground(0);
+    
+    
+    cam.begin();
+    
+    ofDrawBox(0,0,0, 300, 300, 300);
+    
+    ofPushMatrix();{
+        
+        ofxCv::Mat rvec = aruco.getBoard().Rvec;
+        ofxCv::Mat tvec = aruco.getBoard().Tvec;
+        
+        ofxCv::Mat R;
+        ofxCv::Rodrigues(rvec,R);
+        
+        ofxCv::Mat cameraRotationVector;
+        
+        ofxCv::Rodrigues(R.t(), cameraRotationVector);
+        ofxCv::Mat cameraTranslationVector = -R.t()*tvec;
+        
+        
+        /*ofQuaternion q =aruco.getBoardRotation();
+        float angle, rx, ry, rz;
+        
+        q.getRotate(angle, rx, ry, rz);
+        ofRotate(angle, rx, ry, rz);
+        
+        ofTranslate(aruco.getBoardTranslation());
+        
+        ofDrawBox(0,0,0, 10, 10, 10);*/
+        
+        //aruco.getProjectionMatrix();
+        
+        ofxCv::Point3f pos = aruco.camParams.getCameraLocation(rvec, tvec);
+        
+        //cout<<pos<<endl;
+        ofDrawBox(pos.x*100, pos.y*100, pos.z*100, 20, 20, 20);
+        
+        
+        
+    }ofPopMatrix();
+    
+    cam.end();
+    
+    worldFbo.end();
+    
+    ofSetColor(255);
+    camFbo.draw(0,0);
+    worldFbo.draw(camFbo.getWidth(),0);
+    
+    ofSetColor(255);
+    ofPushMatrix();
+    ofTranslate(0, camFbo.getHeight()+20);
 	ofDrawBitmapString("markers detected: " + ofToString(aruco.getNumMarkers()),20,20);
 	ofDrawBitmapString("fps " + ofToString(ofGetFrameRate()),20,40);
 	ofDrawBitmapString("m toggles markers",20,60);
@@ -91,6 +179,7 @@ void testApp::draw(){
 	ofDrawBitmapString("i toggles board image",20,100);
 	ofDrawBitmapString("s saves board image",20,120);
 	ofDrawBitmapString("0-9 saves marker image",20,140);
+    ofPopMatrix();
 }
 
 //--------------------------------------------------------------

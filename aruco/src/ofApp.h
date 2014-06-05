@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "ofxAruco.h"
+#include "ofxOsc.h"
 
 class testApp : public ofBaseApp{
     
@@ -32,4 +33,19 @@ public:
     bool showBoardImage;
     ofImage board;
     ofImage marker;
+
+    ofFbo camFbo;
+    ofFbo worldFbo;
+    
+    ofEasyCam cam;
+    
+    //cv::Size size;
+    //double projMatrix[16];
+    //float projfMatrix[16];
+    //ofMatrix4x4 ofprojMatrix;
+    
+    ofxOscSender sender;
+    
+    
+
 };

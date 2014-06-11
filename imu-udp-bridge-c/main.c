@@ -102,8 +102,8 @@ int main(int argc,char** argv)
   struct termios tio;
   FILE * file;
   char c;
-  char * recipient = calloc ( 4*3 + 3 + 1, sizeof(char));
-  char * r_ptr = recipient;
+  char * fp_recipient = calloc ( 4*3 + 3 + 1, sizeof(char));
+  char * r_ptr = fp_recipient;
 
   // Read the IP of the recipient from recipient.txt
   file = fopen( "recipient.txt" , "r");
@@ -123,7 +123,7 @@ int main(int argc,char** argv)
     return(255);
   }
   
-  printf("ROKOKO streamer starting, sending to %s\n", recipient);  
+  printf("ROKOKO streamer starting, sending to %s\n", fp_recipient);  
 
   prepare_terminal(&tio);
 
@@ -133,7 +133,7 @@ int main(int argc,char** argv)
     printf("Opening %s\n", argv[i]);
 
     int fd = open_device(argv[i], &tio);
-    lo_address recipient = lo_address_new(recipient, "14040");
+    lo_address recipient = lo_address_new(fp_recipient, "14040");
     
     // Construct the arguments struct and spawn a thread
     //sensor_args * args = malloc(sizeof(sensor_args));

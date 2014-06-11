@@ -108,7 +108,7 @@ int main(int argc,char** argv)
   // Read the IP of the recipient from recipient.txt
   file = fopen( "recipient.txt" , "r");
   if (file) {
-    while ((c = getc(file)) != EOF && c != '\n') {
+    while ((c = getc(file)) != EOF && c != '\n' && c != '\r') {
       *(r_ptr++) = c;
     }
     *(r_ptr) = 0;

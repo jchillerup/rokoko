@@ -34,6 +34,7 @@ void testApp::setup(){
 	}
     
 	//aruco.setThreaded(false);
+
 	aruco.setup("intrinsics.int", 640, 480, boardName);
 	aruco.getBoardImage(board.getPixelsRef());
 	board.update();
@@ -51,7 +52,7 @@ void testApp::setup(){
     camFbo.allocate(grabber.getWidth(), grabber.getHeight());
     worldFbo.allocate(grabber.getWidth(), grabber.getHeight());
     
-    sender.setup("192.168.0.108", 14040);
+    sender.setup("127.0.0.1", 7000);
     
     
 }
@@ -62,26 +63,25 @@ void testApp::update(){
 	if(video->isFrameNew()){
 		aruco.detectBoard(video->getPixelsRef());
         
-        
         ofxOscMessage m;
         
         ofxCv::Mat rvec = aruco.getBoard().Rvec;
         ofxCv::Mat tvec = aruco.getBoard().Tvec;
         
-        //rvec
+        //cout<<rvec<<endl;
+        //cout<<tvec<<endl;
         
         m.addFloatArg(rvec.at<float>(0));
         m.addFloatArg(rvec.at<float>(1));
         m.addFloatArg(rvec.at<float>(2));
         
-        m.addFloatArg(tvec.at<float>(3));
-        m.addFloatArg(tvec.at<float>(4));
-        m.addFloatArg(tvec.at<float>(5));
+        m.addFloatArg(tvec.at<float>(0));
+        m.addFloatArg(tvec.at<float>(1));
+        m.addFloatArg(tvec.at<float>(2));
         
         //m.addFloatArg(tvec);
         
         sender.sendMessage(m);
-        
         
 	}
 }
@@ -111,8 +111,23 @@ void testApp::draw(){
 	if(showBoard && aruco.getBoardProbability()>0.03){
 		aruco.beginBoard();
 		drawMarker(.5,ofColor::red);
+        
+        
+        ofxCv::Mat rvec = aruco.getBoard().Rvec;
+        ofxCv::Mat tvec = aruco.getBoard().Tvec;
+        
+        ofxCv::Point3f pos = aruco.camParams.getCameraLocation(rvec, tvec);
+        
+        //cout<<pos<<endl;
+        ofSetColor(255);
+        ofFill();
+        ofDrawBox(pos.x, pos.y, pos.z, 0.05, 0.05, 0.05);
+        
 		aruco.end();
 	}
+    
+    
+    
     
     camFbo.end();
     
@@ -124,6 +139,7 @@ void testApp::draw(){
     
     cam.begin();
     
+    ofNoFill();
     ofDrawBox(0,0,0, 300, 300, 300);
     
     ofPushMatrix();{
@@ -131,32 +147,11 @@ void testApp::draw(){
         ofxCv::Mat rvec = aruco.getBoard().Rvec;
         ofxCv::Mat tvec = aruco.getBoard().Tvec;
         
-        ofxCv::Mat R;
-        ofxCv::Rodrigues(rvec,R);
-        
-        ofxCv::Mat cameraRotationVector;
-        
-        ofxCv::Rodrigues(R.t(), cameraRotationVector);
-        ofxCv::Mat cameraTranslationVector = -R.t()*tvec;
-        
-        
-        /*ofQuaternion q =aruco.getBoardRotation();
-        float angle, rx, ry, rz;
-        
-        q.getRotate(angle, rx, ry, rz);
-        ofRotate(angle, rx, ry, rz);
-        
-        ofTranslate(aruco.getBoardTranslation());
-        
-        ofDrawBox(0,0,0, 10, 10, 10);*/
-        
-        //aruco.getProjectionMatrix();
-        
         ofxCv::Point3f pos = aruco.camParams.getCameraLocation(rvec, tvec);
         
         //cout<<pos<<endl;
+        ofRotateY(90);
         ofDrawBox(pos.x*100, pos.y*100, pos.z*100, 20, 20, 20);
-        
         
         
     }ofPopMatrix();

@@ -26,8 +26,10 @@ def upgrade_all():
     upgrade()
 
 def upgrade():
-    run('sudo apt-get update')
-    run('sudo apt-get upgrade')
+    with cd('/home/rokoko/rokoko')
+        run('git pull')
+        with cd('cd imu-udp-bridge-c')
+            run('make')
 
 @roles('leader')
 def test_run():

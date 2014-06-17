@@ -26,9 +26,9 @@ def upgrade_all():
     upgrade()
 
 def upgrade():
-    with cd('/home/rokoko/rokoko')
+    with cd('/home/rokoko/rokoko'):
         run('git pull')
-        with cd('cd imu-udp-bridge-c')
+        with cd('cd imu-udp-bridge-c'):
             run('make')
 
 @roles('leader')

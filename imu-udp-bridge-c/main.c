@@ -6,21 +6,35 @@
 #include <assert.h>
 #include <termios.h>
 #include <lo/lo.h>
-#include <pthread.h>
 #include "settings.h"
+
+const unsigned char GET_READING_BYTE = 'g';
+const unsigned char GET_IDENTIFIER_BYTE = 'i';
+
+typedef struct sensor_args {
+  char * devnode;
+  int tty_fd;
+  lo_address* recipient;
+  char * ident;
+} sensor_args;
+
+typedef struct sensor_reading {
+  char * ident;
+  char * reading;
+} sensor_reading;
+
 
 // Sets up a device for dumping data. Returns a file descriptor
 int open_device(char* address, struct termios * tio) {
   int tty_fd;
 
-  tty_fd = open(address, O_RDWR | O_NOCTTY);
+  tty_fd = open(address, O_RDWR | O_NOCTTY );
   cfsetospeed(tio, B115200);            // 115200 baud
   cfsetispeed(tio, B115200);            // 115200 baud
   tcsetattr(tty_fd, TCSANOW, tio);
 
   return tty_fd;
 }
-
 
 void prepare_terminal(struct termios * tio) {
   memset(tio, 0, sizeof(*tio));
@@ -32,71 +46,37 @@ void prepare_terminal(struct termios * tio) {
   tio->c_cc[VTIME] = 5;
 }
 
-
-typedef struct sensor_args {
-  char * devnode;
-  int tty_fd;
-  lo_address* recipient;
-} sensor_args;
-
-
-void * work_sensor(void * v_args) {
-  sensor_args * args = (sensor_args *) v_args;
-  
-  const unsigned char GET_READING_BYTE = 'g';
-  const unsigned char GET_IDENTIFIER_BYTE = 'i';
-  
+void * prepare_sensor(sensor_args * args) {  
   int num_packets = 0;
   int fail_packets = 0;
-  char sensor_ident[16];
 
+  // Get the ident of the sensor
+  write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
+  read(args->tty_fd, args->ident, 16);
+  printf("Sensor ident: %s\n", args->ident);
+}
+
+void get_reading(sensor_args * args, sensor_reading* reading) {
+  int read_out = 0;
   // Prepare a datastructure for receiving payloads.
   float * payload = malloc(4 * sizeof(float));
 
-  printf("devnode: %s\n", args->devnode);
-  printf("tty:     %d\n", args->tty_fd);
-  
-  // Get the ident of the sensor
-  write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
-  read(args->tty_fd, sensor_ident, 16);
-  printf("Sensor ident: %s\n", sensor_ident);
-  
-  // Loop if DEBUG is false OR if it's true and num_packets < 100.
-  while ( (DEBUG ^ 1) || (DEBUG && num_packets < 100) )
-    {
-      int read_out = 0;
-      // Write a 'g' to the Arduino
-      write(args->tty_fd, &GET_READING_BYTE, 1);
+  // Write a 'g' to the Arduino
+  write(args->tty_fd, &GET_READING_BYTE, 1);
 
-      // Put the output from the Arduino in `payload'. `read' will block.
-      read_out = read(args->tty_fd, payload, 16);
-      num_packets++;
+  // Put the output from the Arduino in `payload'. `read' will block.
+  read_out = read(args->tty_fd, payload, 16);
 
-      if (read_out < 16) {
-        fail_packets++;
-        continue;
-      }
-      
-      if (DEBUG)
-        printf("%.2f, %.2f, %.2f, %.2f\n", payload[1], payload[2], payload[3], payload[0]);
-
-      // Put the payload into an OSC message.
-      lo_send(*(args->recipient), "/sensor", "sffff", sensor_ident, payload[1], payload[2], payload[3], payload[0]);
-    }
-
-  printf("num_packets: %d, fail_packets: %d\n", num_packets, fail_packets);
-  
+  if (read_out == 16) {
+    memcpy(reading, payload, 4* sizeof(float));
+  }
   free(payload);
-
-  pthread_exit(NULL);
 }
-
 
 int main(int argc,char** argv)
 {
   // We allocate as many threads as we have arguments for the program, one for each device
   // to handle.
-  pthread_t threads[ argc - 1 ];
   sensor_args arg_structs[ argc - 1 ];
   int i;
   struct termios tio;
@@ -104,7 +84,9 @@ int main(int argc,char** argv)
   char c;
   char * fp_recipient = calloc ( 4*3 + 3 + 1, sizeof(char));
   char * r_ptr = fp_recipient;
-
+  int num_sensors = argc - 1;
+  sensor_reading * sensors = calloc(num_sensors, sizeof(sensor_reading));
+  
   // Read the IP of the recipient from recipient.txt
   file = fopen( "recipient.txt" , "r");
   if (file) {
@@ -117,18 +99,17 @@ int main(int argc,char** argv)
     return(255);
   }
 
-
   if (argc == 1) {
     printf("No device node(s) given\n");
     return(255);
   }
   
   printf("ROKOKO streamer starting, sending to %s\n", fp_recipient);  
-
+  printf("Allocating %d sensors\n", num_sensors);
+  
   prepare_terminal(&tio);
 
-  // Loop through all commandline args and start a thread for each sensor we
-  // want to look at.
+  // Loop through all commandline args and prepare each sensor
   for (i = 1; i < argc; i++) {
     printf("Opening %s\n", argv[i]);
 
@@ -140,13 +121,25 @@ int main(int argc,char** argv)
     arg_structs[i-1].devnode = argv[i];
     arg_structs[i-1].tty_fd = fd;
     arg_structs[i-1].recipient = &recipient;
-
-    pthread_create(&threads[i-1], NULL, work_sensor, &arg_structs[i-1]);
+    arg_structs[i-1].ident = calloc(16, sizeof(char));
+    
+    prepare_sensor(&arg_structs[i-1]);
   }
 
-  for (i = 0; i < argc-1; i++) {
-    pthread_join(threads[i], NULL);
+  while (1) {
+    // Keep reading them
+    for (i=0; i<argc-1; i++) {
+      get_reading(&arg_structs[i], &(sensors[i]));
+    }
+
+    // Send sensors to the recipient
+    for (i = 0; i< num_sensors; i++) {
+      printf("%8x ", sensors[i].reading);
+    }
+
+    printf("\n");
   }
+
   
   // Clean up the file descriptors
   for (i = 0; i< argc-1; i++)  {

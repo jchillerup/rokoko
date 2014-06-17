@@ -64,13 +64,18 @@ MPU9150Lib MPU;                                              // the MPU object
 #define NOP 0
 #define CALIB_ACCEL 1
 #define CALIB_MAG 2
-#define RUNNING 3
+#define INIT 3
 
 
 MPUQuaternion gravity;                                     // this is our earth frame gravity vector
 char LOOPSTATE = NOP;
 char LEDSTATE = LOW;
 int delayTime = 10;
+
+MPUQuaternion rotatedGravity;                            // this is our body frame gravity vector
+MPUQuaternion fusedConjugate;                            // this is the conjugate of the fused quaternion
+MPUQuaternion qTemp;                                     // used in the rotation
+
 
 CALLIB_DATA calData;
 long endAtTime;  // Store the timestamp for when the calibrations should end.
@@ -79,17 +84,17 @@ char * IDENTIFIER = (char*) calloc(16, sizeof(byte));
 void setup()
 {
   int ident_eeprom_address = sizeof(CALLIB_DATA);
-  
+
   Serial.begin(SERIAL_PORT_SPEED);
   Wire.begin();
   calLibRead(0, &calData);
-  
+
   MPU.selectDevice(0);
   MPU.useAccelCal(true);
   MPU.useMagCal(true);
- 
+
   MPU.init(MPU_UPDATE_RATE, MPU_MAG_MIX_GYRO_AND_MAG, MAG_UPDATE_RATE, MPU_LPF_RATE);     // start the MPU
-  
+
   //  set up the initial gravity vector for quaternion rotation - max value down the z axis
 
   gravity[QUAT_W] = 0;
@@ -98,29 +103,30 @@ void setup()
   gravity[QUAT_Z] = SENSOR_RANGE;
 
   pinMode(13, OUTPUT);
-  
+
   // Reading the ident from EEPROM
   byte *ptr = (byte *) IDENTIFIER;
   for (byte i = 0; i < 16; i++)
     *ptr++ = EEPROM.read(ident_eeprom_address + i);
-  
-  
+
   delay(5);
+  
+  LOOPSTATE = INIT;
 }
 
 
 // PROCEDURE FOR CALIBRATING THE ACCELEROMETER, STARTUP
 void accelCalStart() {
-  calLibRead(0, &calData);                                    // pick up existing accel data if there   
+  calLibRead(0, &calData);                                    // pick up existing accel data if there
 
   calData.accelValid = false;
   calData.accelMinX = 0x7fff;                                // init accel cal data
   calData.accelMaxX = 0x8000;
-  calData.accelMinY = 0x7fff;                              
+  calData.accelMinY = 0x7fff;
   calData.accelMaxY = 0x8000;
-  calData.accelMinZ = 0x7fff;                             
+  calData.accelMinZ = 0x7fff;
   calData.accelMaxZ = 0x8000;
-  
+
   MPU.useAccelCal(false);                                  // disable accel offsets
 }
 
@@ -160,21 +166,21 @@ void accelCalLoop() {
 void accelCalSave() {
   calData.accelValid = true;
   calLibWrite(0, &calData);
-  Serial.println("AS");  
+  Serial.println("AS");
 }
 
 
 
 // PROCEDURE FOR CALIBRATING THE MAGNETOMETER, STARTUP
 void magCalStart() {
-  calLibRead(0, &calData);                                    // pick up existing accel data if there   
+  calLibRead(0, &calData);                                    // pick up existing accel data if there
 
   calData.magValid = false;
   calData.magMinX = 0x7fff;                                // init mag cal data
   calData.magMaxX = 0x8000;
-  calData.magMinY = 0x7fff;                              
+  calData.magMinY = 0x7fff;
   calData.magMaxY = 0x8000;
-  calData.magMinZ = 0x7fff;                             
+  calData.magMinZ = 0x7fff;
   calData.magMaxZ = 0x8000;
 }
 
@@ -188,7 +194,7 @@ void magCalLoop() {
       calData.magMinX = MPU.m_rawMag[VEC3_X];
       changed = true;
     }
-     if (MPU.m_rawMag[VEC3_X] > calData.magMaxX) {
+    if (MPU.m_rawMag[VEC3_X] > calData.magMaxX) {
       calData.magMaxX = MPU.m_rawMag[VEC3_X];
       changed = true;
     }
@@ -196,7 +202,7 @@ void magCalLoop() {
       calData.magMinY = MPU.m_rawMag[VEC3_Y];
       changed = true;
     }
-     if (MPU.m_rawMag[VEC3_Y] > calData.magMaxY) {
+    if (MPU.m_rawMag[VEC3_Y] > calData.magMaxY) {
       calData.magMaxY = MPU.m_rawMag[VEC3_Y];
       changed = true;
     }
@@ -204,7 +210,7 @@ void magCalLoop() {
       calData.magMinZ = MPU.m_rawMag[VEC3_Z];
       changed = true;
     }
-     if (MPU.m_rawMag[VEC3_Z] > calData.magMaxZ) {
+    if (MPU.m_rawMag[VEC3_Z] > calData.magMaxZ) {
       calData.magMaxZ = MPU.m_rawMag[VEC3_Z];
       changed = true;
     }
@@ -226,120 +232,100 @@ void loop()
     switch (c = Serial.read()) {
       case 'a':
       case 'A':
-        if (LOOPSTATE == CALIB_MAG || LOOPSTATE == CALIB_ACCEL) { break; }
-        
+        if (LOOPSTATE == CALIB_MAG || LOOPSTATE == CALIB_ACCEL) {
+          break;
+        }
+
         Serial.println("ca");
-        
+
         LOOPSTATE = CALIB_ACCEL;
         accelCalStart();
-        endAtTime = millis() + 10*1000;
-        
-        while(millis() < endAtTime) {
-          accelCalLoop(); 
+        endAtTime = millis() + 10 * 1000;
+
+        while (millis() < endAtTime) {
+          accelCalLoop();
         }
-        
+
         accelCalSave();
-        Serial.println("CA");  
-  
-        LOOPSTATE = NOP;      
+        Serial.println("CA");
+
+        LOOPSTATE = NOP;
         break;
 
       case 'm':
       case 'M':
-        if (LOOPSTATE == CALIB_MAG || LOOPSTATE == CALIB_ACCEL) { break; }
-        
+        if (LOOPSTATE == CALIB_MAG || LOOPSTATE == CALIB_ACCEL) {
+          break;
+        }
+
         Serial.println("cm");
-        
+
         LOOPSTATE = CALIB_MAG;
         magCalStart();
-        endAtTime = millis() + 10*1000;
-        
-        while(millis() < endAtTime) {
-          magCalLoop(); 
+        endAtTime = millis() + 10 * 1000;
+
+        while (millis() < endAtTime) {
+          magCalLoop();
         }
-        
+
         magCalSave();
         Serial.println("CM");
-        
+
         LOOPSTATE = NOP;
         break;
-        
+
       case 'g':
       case 'G':
-        LOOPSTATE = RUNNING;
+        if (LOOPSTATE == NOP) {
+          Serial.write((byte*) MPU.m_fusedQuaternion, 4 * sizeof(float));
+        }
         break;
-        
+
       case 'l':
       case 'L':
-        LEDSTATE = LEDSTATE==HIGH?LOW:HIGH;
+        LEDSTATE = LEDSTATE == HIGH ? LOW : HIGH;
         digitalWrite(13, LEDSTATE);
         break;
-        
+
       case 'd':
       case 'D':
-        delayTime += (c=='d'?-1:1)*5;    // multiply with -1 if d, multiply with 1 if D
-        if (delayTime < 0) { delayTime = 0; }
-        if (delayTime > 100) { delayTime = 100; }
-        
+        delayTime += (c == 'd' ? -1 : 1) * 5; // multiply with -1 if d, multiply with 1 if D
+        if (delayTime < 0) {
+          delayTime = 0;
+        }
+        if (delayTime > 100) {
+          delayTime = 100;
+        }
+
         Serial.println(delayTime);
         break;
-        
+
       case 'i':
         Serial.write(IDENTIFIER, 16);
-        
         break;
-        
+
       case 'I':
         Serial.readBytes(IDENTIFIER, 16);
         // Put the identifier in the first 16 bytes after the calibration data
         int eeprom_address = sizeof(CALLIB_DATA);
 
         char* ptr = IDENTIFIER;
-        
+
         for (byte i = 0; i < 16; i++)
           EEPROM.write(eeprom_address + i, *ptr++);
 
         break;
     }
   }
-  
-  
-  switch (LOOPSTATE) {
-    case NOP: 
-    break;
-    
-    case RUNNING:
-    default:  
-      MPUQuaternion rotatedGravity;                            // this is our body frame gravity vector
-      MPUQuaternion fusedConjugate;                            // this is the conjugate of the fused quaternion
-      MPUQuaternion qTemp;                                     // used in the rotation
-    
-      if (MPU.read()) {                                        // get the latest data
-        MPUQuaternionConjugate(MPU.m_fusedQuaternion, fusedConjugate);  // need this for the rotation
-    
-        //  rotate the gravity vector into the body frame
-        MPUQuaternionMultiply(gravity, MPU.m_fusedQuaternion, qTemp);
-        MPUQuaternionMultiply(fusedConjugate, qTemp, rotatedGravity);
 
-        // Send the quaternion data structure consisting of four floats.
-        Serial.write((byte*) MPU.m_fusedQuaternion, 4*sizeof(float));        
+  if (MPU.read()) {                                        // get the latest data
+    MPUQuaternionConjugate(MPU.m_fusedQuaternion, fusedConjugate);  // need this for the rotation
 
-        // the residual accelerations    
-        //  now subtract rotated gravity from the body accels to get real accelerations
-        //  note that signs are reversed to get +ve acceleration results in the conventional axes.
-        
-        // Serial.print(-(MPU.m_calAccel[VEC3_X] - rotatedGravity[QUAT_X])); Serial.write("!");
-        // Serial.print(-(MPU.m_calAccel[VEC3_Y] - rotatedGravity[QUAT_Y])); Serial.write("!");
-        // Serial.print(-(MPU.m_calAccel[VEC3_Z] - rotatedGravity[QUAT_Z]));
+    //  rotate the gravity vector into the body frame
+    MPUQuaternionMultiply(gravity, MPU.m_fusedQuaternion, qTemp);
+    MPUQuaternionMultiply(fusedConjugate, qTemp, rotatedGravity);
     
-        // This should be integrated twice to the get the position
-        // http://www.varesano.net/blog/fabio/simple-gravity-compensation-9-dom-imus
-    
-        //delay(delayTime);
-        
-        LOOPSTATE = NOP;
-      }
-    break;
+    LOOPSTATE = NOP;
   }
 }
 

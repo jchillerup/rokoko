@@ -17,17 +17,17 @@ You can use fabric with the included fabfile to configure a new ip address and u
 
 Insert your ip address below
 
-    $ fab setip:192.168.0.1
+    $ fab setip_all:192.168.0.1
 
 ### Upgrade firmware
 	
 This will get new code from git and run make.
 
-	$ fab upgrade
+	$ fab upgrade_all
 
 ### Reboot
 
-	$ fab reboot
+	$ fab reboot_all
 
 Check fabfile.py for addition commands.
 

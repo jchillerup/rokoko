@@ -69,6 +69,7 @@ void get_reading(sensor_args * args, sensor_reading* reading) {
 
   if (read_out == 16) {
     memcpy(reading, payload, 4* sizeof(float));
+    reading->ident = args->ident;
   }
   free(payload);
 }
@@ -134,7 +135,7 @@ int main(int argc,char** argv)
 
     // Send sensors to the recipient
     for (i = 0; i< num_sensors; i++) {
-      printf("%8x ", sensors[i].reading);
+      printf("%s %8x ", sensors[i].ident, sensors[i].reading);
     }
 
     printf("\n");

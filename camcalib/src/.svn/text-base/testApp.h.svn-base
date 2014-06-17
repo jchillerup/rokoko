@@ -1,0 +1,39 @@
+
+#include "ofMain.h"
+#include "ofCvMain.h"
+
+
+class testApp : public ofSimpleApp, public ofCvBlobListener {
+
+  public:
+
+    int cwidth;
+    int cheight;
+    ofVideoGrabber  vidGrabber;
+    ofCvColorImage  colorImg;
+    ofCvGrayscaleImage  grayImg;
+    ofCvGrayscaleImage  bgImg;
+
+    ofCvContourFinder  contourFinder;
+    ofCvBlobTracker  blobTracker;
+    
+	int threshold;
+	bool bLearnBakground;
+        
+    
+    void setup();
+    void update();
+    void draw();
+
+    void keyPressed( int key );
+    void mouseMoved( int x, int y );
+    void mouseDragged( int x, int y, int button );
+    void mousePressed( int x, int y, int button );
+    void mouseReleased();
+    
+    void blobOn( int x, int y, int id, int order );
+    void blobMoved( int x, int y, int id, int order );    
+    void blobOff( int x, int y, int id, int order );    
+        
+};
+

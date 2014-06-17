@@ -119,7 +119,7 @@ void ofApp::update(){
             ofVec4f q = ofVec4f(m.getArgAsFloat(4), m.getArgAsFloat(1), m.getArgAsFloat(2), m.getArgAsFloat(3));
             string id = m.getArgAsString(0).substr(0,2);
             
-            mSkeleton[id]->setOrientation(filters[id]->update(q));
+            mSkeleton["01"]->setOrientation(filters["01"]->update(q));
             
            /* if(string("01").compare(0,2,m.getArgAsString(0))) {
                 mSkeleton["01"]->setOrientation(q);

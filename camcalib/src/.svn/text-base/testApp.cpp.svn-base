@@ -1,0 +1,98 @@
+
+#include "testApp.h"
+ 
+
+
+void testApp::setup() {
+    ofSetFrameRate( 60 );
+    cwidth = 320;
+    cheight = 240;
+	threshold = 60;
+	bLearnBakground = true;    
+
+	vidGrabber.initGrabber( cwidth, cheight );
+	colorImg.allocate( cwidth, cheight );
+	grayImg.allocate( cwidth, cheight );
+	bgImg.allocate( cwidth, cheight );
+    
+    blobTracker.setListener( this );
+}
+
+
+
+void testApp::update() {
+	ofBackground( 100, 100, 100 );
+	vidGrabber.grabFrame();
+	
+	if( vidGrabber.isFrameNew() ) {
+        colorImg = vidGrabber.getPixels();
+        colorImg.mirror( false, true );        
+        grayImg = colorImg;
+     
+        if( bLearnBakground ) {
+            bgImg = grayImg;
+            bLearnBakground = false;
+        }    
+
+        grayImg.absDiff( bgImg );
+        grayImg.blur( 11 );
+        grayImg.threshold( threshold );
+
+        //findContures( img, minSize, maxSize, nMax, inner contours yes/no )
+        contourFinder.findContours( grayImg, 10,20000, 10, false );
+        blobTracker.trackBlobs( contourFinder.blobs );
+    }
+    
+}
+
+
+
+void testApp::draw() {
+	ofSetColor( 0xffffff );
+    
+    colorImg.draw( 20,200 );
+    grayImg.draw( 360,200 );
+    
+    blobTracker.draw( 20,200 );
+    
+    ofDrawBitmapString( "[space] to learn background\n[+]/[-] to adjust threshold", 
+                        20,510 );      
+    
+}
+
+
+
+
+
+void testApp::keyPressed( int key ) {
+    if( key == ' ' ) {
+        bLearnBakground = true;
+    } else if( key == '-' ) {
+        threshold = MAX( 0, threshold-1 );
+    } else if( key == '+' || key == '=' ) {
+        threshold = MIN( 255, threshold+1 );
+    }
+}
+void testApp::mouseMoved( int x, int y ) {}	
+void testApp::mouseDragged( int x, int y, int button ) {}
+void testApp::mousePressed( int x, int y, int button ) {}
+void testApp::mouseReleased() {}
+
+
+void testApp::blobOn( int x, int y, int id, int order ) {
+    cout << "blobOn() - id:" << id << " order:" << order << endl;
+}    
+void testApp::blobMoved( int x, int y, int id, int order) {
+    cout << "blobMoved() - id:" << id << " order:" << order << endl;
+    
+    // full access to blob object ( get a reference)
+    ofCvTrackedBlob blob = blobTracker.getById( id );
+    cout << "area: " << blob.area << endl;
+
+}
+void testApp::blobOff( int x, int y, int id, int order ) {
+    cout << "blobOff() - id:" << id << " order:" << order << endl;
+}
+
+
+

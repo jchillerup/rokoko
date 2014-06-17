@@ -1,0 +1,52 @@
+8
+
+dir
+18
+svn+ssh://noema@svn.stefanix.net/home/noema/svn/openFrameworks_4/app-my/blobTrackingExample/src
+svn+ssh://noema@svn.stefanix.net/home/noema/svn/openFrameworks_4
+
+
+
+2008-01-22T22:28:54.231950Z
+18
+noema
+
+
+svn:special svn:externals svn:needs-lock
+
+testApp.cpp
+file
+22
+
+
+
+2008-01-29T21:57:12.000000Z
+3f40ea362414811225d86e2bc6704505
+2008-01-29T23:35:35.347194Z
+22
+noema
+
+main.cpp
+file
+19
+
+
+
+2008-01-22T22:29:46.000000Z
+df8555d2be2eb9b710b4e6c275087afc
+2008-01-22T22:35:26.027284Z
+19
+noema
+
+testApp.h
+file
+
+
+
+
+2008-01-22T22:27:41.000000Z
+37e75855622b7ad89a8e738c2cd7f301
+2008-01-22T22:28:54.231950Z
+18
+noema
+

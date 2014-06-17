@@ -26,7 +26,7 @@ void ofApp::setup(){
   vector<ofSerialDeviceInfo> devices = serial.getDeviceList();
   
   int serialAdresses [] = {0
-                           // ,1
+                            ,1
                            // ,2
                            // ,3
                            // ,4
@@ -129,7 +129,6 @@ void ofApp::setup(){
     it->second->setName(it->first);
   }
 
-
   position = ofVec3f(0,0,0);
   velocity = ofVec3f(0,0,0);
 }
@@ -159,8 +158,8 @@ void ofApp::update(){
 
 
   if(debugdraw) {
-    mSkeleton["R_Shoulder"]->setOrientation(imus[0]->quaternion);
-    // mSkeleton["R_Elbow"]->setOrientation(imus[1]->quaternion);
+    mSkeleton["R_Elbow"]->setOrientation(imus[0]->quaternion);
+    //mSkeleton["R_Hand"]->setOrientation(imus[1]->quaternion);
     // mSkeleton["R_Hand"]->setOrientation(imus[2]->quaternion);
     
   }

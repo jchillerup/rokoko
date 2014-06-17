@@ -33,7 +33,14 @@ Check fabfile.py for addition commands.
 
 ## Calibration
 
-The IMU's needs to be calibrated. TODO: what to run
+The IMU's needs to be calibrated to work properly.
+
+To start the accelerometer calibration routine send an 'a' on the serial port. Then carefully rotate the sensor around itself to max out the x,y and z axises in 1g.
+
+To calibrate the magnetometer send an 'm' on the serial port and repeat as above but be extra carefull that you are not close to electronic or magnetic disturbances in the room. Step away from computers, refrigerators, radiator, any big metal objects etc. 
+
+To set the unique identifier of a sensor send a serial 'I' followed by an ID. 
+
 
 
 ## Other tools, legacy / WIP - not complete

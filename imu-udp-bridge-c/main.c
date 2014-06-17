@@ -20,7 +20,10 @@ typedef struct sensor_args {
 
 typedef struct sensor_reading {
   char * ident;
-  char * reading;
+  float w;
+  float x;
+  float y;
+  float z;
 } sensor_reading;
 
 
@@ -58,6 +61,7 @@ void * prepare_sensor(sensor_args * args) {
 
 void get_reading(sensor_args * args, sensor_reading* reading) {
   int read_out = 0;
+  
   // Prepare a datastructure for receiving payloads.
   float * payload = malloc(4 * sizeof(float));
 
@@ -68,7 +72,12 @@ void get_reading(sensor_args * args, sensor_reading* reading) {
   read_out = read(args->tty_fd, payload, 16);
 
   if (read_out == 16) {
-    memcpy(reading, payload, 4* sizeof(float));
+    reading->w = payload[0];
+    reading->x = payload[1];
+    reading->y = payload[2];
+    reading->z = payload[3];
+    
+    // memcpy(w, payload, 4* sizeof(float)); // We're overwriting x, y, z as well.
     reading->ident = args->ident;
   }
   free(payload);
@@ -79,7 +88,7 @@ int main(int argc,char** argv)
   // We allocate as many threads as we have arguments for the program, one for each device
   // to handle.
   sensor_args arg_structs[ argc - 1 ];
-  int i;
+  int i, num_packets;
   struct termios tio;
   FILE * file;
   char c;
@@ -127,18 +136,20 @@ int main(int argc,char** argv)
     prepare_sensor(&arg_structs[i-1]);
   }
 
-  while (1) {
+  while (num_packets < 100) {
     // Keep reading them
     for (i=0; i<argc-1; i++) {
       get_reading(&arg_structs[i], &(sensors[i]));
     }
 
     // Send sensors to the recipient
-    for (i = 0; i< num_sensors; i++) {
-      printf("%s %8x ", sensors[i].ident, sensors[i].reading);
-    }
+    /* for (i = 0; i< num_sensors; i++) { */
+    /*   printf("%s %.02f %.02f %.02f %.02f\n", sensors[i].ident, sensors[i].w, sensors[i].x, sensors[i].y, sensors[i].z); */
+    /* } */
 
-    printf("\n");
+    printf("%d\n", num_packets);
+
+    num_packets++;
   }
 
   

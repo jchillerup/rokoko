@@ -109,7 +109,7 @@ int main(int argc,char** argv)
 
   // Set the delay to wait before polling for an answer
   rw_delay.tv_sec = 0;
-  rw_delay.tv_nsec = 5 * 1e6; // 1000000 ns = 1ms
+  rw_delay.tv_nsec = 7 * 1e6; // 1000000 ns = 1ms
   
   // Read the IP of the recipient from recipient.txt
   file = fopen( "recipient.txt" , "r");
@@ -161,7 +161,7 @@ int main(int argc,char** argv)
       printf("%s %.02f %.02f %.02f %.02f\n", sensors[i].ident, sensors[i].w, sensors[i].x, sensors[i].y, sensors[i].z);
     }
 
-    /* printf("%d\n", num_packets); */
+    printf("*** %d ***\n", num_packets);
 
     num_packets++;
   }

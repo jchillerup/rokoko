@@ -7,6 +7,7 @@
 #include <termios.h>
 #include <lo/lo.h>
 #include "settings.h"
+#include <time.h>
 
 const unsigned char GET_READING_BYTE = 'g';
 const unsigned char GET_IDENTIFIER_BYTE = 'i';
@@ -25,6 +26,8 @@ typedef struct sensor_reading {
   float y;
   float z;
 } sensor_reading;
+
+struct timespec rw_delay;
 
 
 // Sets up a device for dumping data. Returns a file descriptor
@@ -55,6 +58,10 @@ void * prepare_sensor(sensor_args * args) {
 
   // Get the ident of the sensor
   write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
+
+  // Sleep for a while
+  nanosleep(&rw_delay, NULL);
+
   read(args->tty_fd, args->ident, 16);
   printf("Sensor ident: %s\n", args->ident);
 }
@@ -68,6 +75,9 @@ void get_reading(sensor_args * args, sensor_reading* reading) {
   // Write a 'g' to the Arduino
   write(args->tty_fd, &GET_READING_BYTE, 1);
 
+  // Sleep for a while
+  nanosleep(&rw_delay, NULL);
+  
   // Put the output from the Arduino in `payload'. `read' will block.
   read_out = read(args->tty_fd, payload, 16);
 
@@ -96,6 +106,10 @@ int main(int argc,char** argv)
   char * r_ptr = fp_recipient;
   int num_sensors = argc - 1;
   sensor_reading * sensors = calloc(num_sensors, sizeof(sensor_reading));
+
+  // Set the delay to wait before polling for an answer
+  rw_delay.tv_sec = 0;
+  rw_delay.tv_nsec = 5 * 1e6; // 1000000 ns = 1ms
   
   // Read the IP of the recipient from recipient.txt
   file = fopen( "recipient.txt" , "r");
@@ -143,11 +157,11 @@ int main(int argc,char** argv)
     }
 
     // Send sensors to the recipient
-    /* for (i = 0; i< num_sensors; i++) { */
-    /*   printf("%s %.02f %.02f %.02f %.02f\n", sensors[i].ident, sensors[i].w, sensors[i].x, sensors[i].y, sensors[i].z); */
-    /* } */
+    for (i = 0; i< num_sensors; i++) {
+      printf("%s %.02f %.02f %.02f %.02f\n", sensors[i].ident, sensors[i].w, sensors[i].x, sensors[i].y, sensors[i].z);
+    }
 
-    printf("%d\n", num_packets);
+    /* printf("%d\n", num_packets); */
 
     num_packets++;
   }

@@ -65,7 +65,9 @@ void * work_sensor(void * v_args) {
 
   // Get the ident of the sensor
   write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
+#ifdef SLEEP
   nanosleep(&delay_before_read, NULL);
+#endif
   read(args->tty_fd, sensor_ident, 16);
 
   // clear out some of the bytes of the name
@@ -84,9 +86,11 @@ void * work_sensor(void * v_args) {
       // Write a 'g' to the Arduino
       write(args->tty_fd, &GET_READING_BYTE, 1);
 
+#ifdef SLEEP
       // Wait for a little bit
       nanosleep(&delay_before_read, NULL);
-      
+#endif
+
       // Put the output from the Arduino in `payload'. `read' will block.
       read_out = read(args->tty_fd, payload, 16);
       if (read_out != 16) continue;

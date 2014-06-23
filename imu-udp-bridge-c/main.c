@@ -167,15 +167,15 @@ int main(int argc,char** argv)
     pthread_create(&threads[i], NULL, get_reading, &arg_structs[i]);
   }
 
-  // Send sensors to the recipient
-  /* for (i = 0; i< num_sensors; i++) { */
-  /*   printf("%s %.02f %.02f %.02f %.02f\n", sensors[i].ident, sensors[i].w, sensors[i].x, sensors[i].y, sensors[i].z); */
-  /* } */
-
   while (1) {
+    // Create a packet with all the data
+
     for(i=0; i< argc-1; i++) {
-      printf("%.02f %.02f %.02f %.02f\n", arg_structs[i].reading.w, arg_structs[i].reading.x,  arg_structs[i].reading.y, arg_structs[i].reading.z);
+      lo_send(*(arg_structs[i-1].recipient), "/sensor", "sffff", arg_structs[i].ident, arg_structs[i].reading.x, arg_structs[i].reading.y, arg_structs[i].reading.z, arg_structs[i].reading.w);
+      //printf("%s %.02f %.02f %.02f %.02f\n", arg_structs[i].ident, arg_structs[i].reading.w, arg_structs[i].reading.x,  arg_structs[i].reading.y, arg_structs[i].reading.z);
     }
+ 
+    printf(".\n");   
     nanosleep(&net_delay, NULL);
   }
 

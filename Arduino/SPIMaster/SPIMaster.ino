@@ -10,6 +10,10 @@ void setup (void)
   Serial.begin (115200);
   Serial.println ();
   
+  pinMode(MISO, INPUT);
+  pinMode(MOSI, OUTPUT);
+  pinMode(SS, OUTPUT);
+  
   digitalWrite(SS, HIGH);  // ensure SS stays high for now
 
   // Put SCK, MOSI, SS pins into output mode
@@ -20,30 +24,37 @@ void setup (void)
   // Slow down the master a bit
   SPI.setClockDivider(SPI_CLOCK_DIV8);
   
-}  // end of setup
+}
 
 byte transferAndWait (const byte what)
 {
-  byte a = SPI.transfer (what);
-  delayMicroseconds (200);
+  byte a = SPI.transfer(what);
+  
   return a;
-} // end of transferAndWait
+} 
 
 void loop (void)
 {
-
   byte request, reply;
   
   // enable Slave Select
   digitalWrite(SS, LOW);    
 
-  request = 'a';
-  reply = transferAndWait (request);  // add command
+  float reading[4];
 
-  Serial.print("Sent: ");
-  Serial.print(request);
-  Serial.print(", received: ");
-  Serial.println(reply);
-  
-  delay (10);  // 1 second delay 
-}  // end of loop
+  for (int i = 0; i < 16; i++) {
+    reply = transferAndWait (i);
+    /*Serial.print(i);
+    Serial.print(": ");
+    Serial.println(reply);*/
+    ((byte*) reading)[(i-1)%16] = reply;
+  }
+  Serial.print(reading[0]);
+  Serial.print(" ");
+  Serial.print(reading[1]);
+  Serial.print(" ");
+  Serial.print(reading[2]);
+  Serial.print(" ");
+  Serial.println(reading[3]);
+}
+

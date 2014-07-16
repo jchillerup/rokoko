@@ -33,6 +33,8 @@
 #include <inv_mpu.h>
 #include <inv_mpu_dmp_motion_driver.h>
 #include <EEPROM.h>
+#include <SPI.h>
+#include "pins_arduino.h"
 
 MPU9150Lib MPU;                                              // the MPU object
 
@@ -60,12 +62,10 @@ MPU9150Lib MPU;                                              // the MPU object
 //  SERIAL_PORT_SPEED defines the speed to use for the debug serial port
 #define  SERIAL_PORT_SPEED  115200
 
-
 #define NOP 0
 #define CALIB_ACCEL 1
 #define CALIB_MAG 2
 #define INIT 3
-
 
 MPUQuaternion gravity;                                     // this is our earth frame gravity vector
 char LOOPSTATE = NOP;
@@ -103,6 +103,7 @@ void setup()
   gravity[QUAT_Z] = SENSOR_RANGE;
 
   pinMode(13, OUTPUT);
+  pinMode(4, OUTPUT);
 
   // Reading the ident from EEPROM
   byte *ptr = (byte *) IDENTIFIER;
@@ -111,6 +112,20 @@ void setup()
 
   delay(5);
   
+  
+  // Prepare the SPI
+  // have to send on master in, *slave out*
+  pinMode(MISO, OUTPUT);
+  pinMode(MOSI, INPUT);
+  pinMode(SS, INPUT);
+  
+  // turn on SPI in slave mode
+  SPCR |= _BV(SPE);
+
+  // now turn on interrupts
+//  SPCR |= _BV(SPIE);
+  SPI.attachInterrupt();
+
   LOOPSTATE = INIT;
 }
 
@@ -276,6 +291,7 @@ void loop()
 
       case 'g':
       case 'G':
+        // We need to check for this to avoid sending data while at the same time calibrating.
         if (LOOPSTATE == NOP) {
           Serial.write((byte*) MPU.m_fusedQuaternion, 4 * sizeof(float));
         }
@@ -318,14 +334,31 @@ void loop()
     }
   }
 
-  if (MPU.read()) {                                        // get the latest data
-    MPUQuaternionConjugate(MPU.m_fusedQuaternion, fusedConjugate);  // need this for the rotation
+  if (MPU.read()) {
+    MPUQuaternionConjugate(MPU.m_fusedQuaternion, fusedConjugate);
 
     //  rotate the gravity vector into the body frame
     MPUQuaternionMultiply(gravity, MPU.m_fusedQuaternion, qTemp);
     MPUQuaternionMultiply(fusedConjugate, qTemp, rotatedGravity);
     
+    // Allow for polling of data
     LOOPSTATE = NOP;
   }
 }
+
+
+
+// SPI interrupt routine
+ISR (SPI_STC_vect)
+{
+  // We're getting something on the SPI bus. Take note of the time so we can timeout 
+  // if we don't get queried for more bytes in a timely fashion.
+  byte c = SPDR;  // grab byte from SPI Data Register
+  long start = millis();
+  
+  // For now we're just sending the byte that gets queried on the SPI interface.
+  SPDR = ((byte*) MPU.m_fusedQuaternion)[c];
+}
+
+
 

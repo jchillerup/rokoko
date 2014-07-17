@@ -185,14 +185,11 @@ int main(int argc,char **argv)
           index++; //number of images captured
           double tick = (double) getTickCount(); //for checking the speed
           
-          
           // Detection of the board
           float probDetect=TheBoardDetector.detect(TheInputImage);
 
-          // Check the speed by calculating the mean speed of all iterations
-          AvrgTime.first += ((double) getTickCount() - tick) / getTickFrequency();
-          AvrgTime.second++;
-           cout<<"Time detection="<<1000*AvrgTime.first/AvrgTime.second<<" milliseconds"<<endl;
+          // Check the speed 
+          cout<<"Time detection="<< (((double) getTickCount() - tick) / getTickFrequency())*1000 <<" milliseconds"<<endl;
 
 #ifdef SHOW_GUI
            // Print marker borders

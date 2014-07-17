@@ -222,9 +222,9 @@ int main(int argc,char **argv)
                       TheBoardDetector.getDetectedBoard().Tvec.at<float>(1,0),
                       TheBoardDetector.getDetectedBoard().Tvec.at<float>(2,0)
                       );
-              printf("%fms +\r", (((double) getTickCount() - tick) / getTickFrequency())*1000);
+              printf("%fms +\n", (((double) getTickCount() - tick) / getTickFrequency())*1000);
             } else {
-              printf("%fms -\r", (((double) getTickCount() - tick) / getTickFrequency())*100);
+              printf("%fms -\n", (((double) getTickCount() - tick) / getTickFrequency())*100);
             }
             
           }

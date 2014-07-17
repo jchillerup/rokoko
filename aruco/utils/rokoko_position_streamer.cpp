@@ -45,6 +45,7 @@ or implied, of Rafael Muñoz Salinas.
 #include "lo/lo.h"
 
 //define SHOW_THRESHOLDED
+//define SHOW_GUI
 
 using namespace cv;
 using namespace aruco;
@@ -148,20 +149,23 @@ int main(int argc,char **argv)
       }
 
       //Create gui
-      #ifdef SHOW_THRESHOLDED
+#ifdef SHOW_THRESHOLDED
       cv::namedWindow("thres",1);
-      #endif
-      
-      cv::namedWindow("in",1);
+#endif
+
       TheBoardDetector.setParams(TheBoardConfig,TheCameraParameters,TheMarkerSize);
       TheBoardDetector.getMarkerDetector().getThresholdParams( ThresParam1,ThresParam2);
       TheBoardDetector.getMarkerDetector().setCornerRefinementMethod(MarkerDetector::HARRIS);
       TheBoardDetector.set_repj_err_thres(1.5);
-      
+
+#ifdef SHOW_GUI
+      cv::namedWindow("in",1);      
       iThresParam1=ThresParam1;
       iThresParam2=ThresParam2;
       cv::createTrackbar("ThresParam1", "in", &iThresParam1, 13, cvTackBarEvents);
       cv::createTrackbar("ThresParam2", "in", &iThresParam2, 13, cvTackBarEvents);
+#endif
+      
       char key = 0;
       int index = 0;
 
@@ -196,17 +200,20 @@ int main(int argc,char **argv)
           //   TheBoardDetector.getDetectedMarkers()[i].draw(TheInputImageCopy,Scalar(0,0,255),1);
           // }
 
+#ifdef SHOW_GUI
           // Initialize an indicator. It turns green if a board is detected.
           cv::circle(TheInputImageCopy, cv::Point(20,20), 15, cv::Scalar(0,0,255,0), -1);
+#endif
           
           // Print board
           if (TheCameraParameters.isValid()) {
             if ( probDetect > 0.0020) {
+#ifdef SHOW_GUI
               cv::circle(TheInputImageCopy, cv::Point(20,20), 15, cv::Scalar(0,255,0,0), -1);
               
               CvDrawingUtils::draw3dAxis(TheInputImageCopy, TheBoardDetector.getDetectedBoard(), TheCameraParameters);
               CvDrawingUtils::draw3dCube(TheInputImageCopy, TheBoardDetector.getDetectedBoard(), TheCameraParameters);
-
+#endif
               // We can access Rvec and Tvec like so
               // cout << TheBoardDetector.getDetectedBoard().Rvec << endl;
               // cout << TheBoardDetector.getDetectedBoard().Tvec << endl;
@@ -225,12 +232,14 @@ int main(int argc,char **argv)
             }
           }
 
-                    
+#ifdef SHOW_GUI
           //show input with augmented information and  the thresholded image
           cv::imshow("in",TheInputImageCopy);
-          #ifdef SHOW_THRESHOLDED
+#endif
+
+#ifdef SHOW_THRESHOLDED
           cv::imshow("thres",TheBoardDetector.getMarkerDetector().getThresholdedImage());
-          #endif
+#endif
           
           key=cv::waitKey(waitTime);//wait for key to be pressed
           processKey(key);

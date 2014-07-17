@@ -36,6 +36,9 @@ or implied, of Rafael Muñoz Salinas.
  * made of ArUco markers.
 **/
 
+//define SHOW_THRESHOLDED
+//define SHOW_GUI
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -43,9 +46,6 @@ or implied, of Rafael Muñoz Salinas.
 #include <opencv2/imgproc/imgproc.hpp>
 #include "aruco.h"
 #include "lo/lo.h"
-
-//define SHOW_THRESHOLDED
-//define SHOW_GUI
 
 using namespace cv;
 using namespace aruco;
@@ -91,6 +91,7 @@ bool readArguments ( int argc,char **argv )
   return true;
 }
 
+#ifdef SHOW_GUI
 void processKey(char k) {
   switch (k) {
   case 's':
@@ -99,6 +100,7 @@ void processKey(char k) {
     break;
   }
 }
+#endif
 
 /************************************
  *
@@ -176,33 +178,30 @@ int main(int argc,char **argv)
       do
         {
           TheVideoCapturer.retrieve(TheInputImage);
-          //TheInputImage.copyTo(TheInputImageCopy);
+          
+          // Copy the image into the TheInputImageCopy while at the same time resizing it
           resize(TheInputImage, TheInputImageCopy, Size(), 0.5, 0.5, CV_INTER_AREA);
           
           index++; //number of images captured
           double tick = (double) getTickCount(); //for checking the speed
           
-          // Resize the image
-          //TheInputImageCopy.resize()
           
-          //Detection of the board
+          // Detection of the board
           float probDetect=TheBoardDetector.detect(TheInputImage);
 
-          /*
-          //check the speed by calculating the mean speed of all iterations
+          // Check the speed by calculating the mean speed of all iterations
           AvrgTime.first += ((double) getTickCount() - tick) / getTickFrequency();
           AvrgTime.second++;
-          // cout<<"Time detection="<<1000*AvrgTime.first/AvrgTime.second<<" milliseconds"<<endl;
-          */
-          
-          // Print marker borders
-          // for (unsigned int i = 0; i < TheBoardDetector.getDetectedMarkers().size(); i++) {
-          //   TheBoardDetector.getDetectedMarkers()[i].draw(TheInputImageCopy,Scalar(0,0,255),1);
-          // }
+           cout<<"Time detection="<<1000*AvrgTime.first/AvrgTime.second<<" milliseconds"<<endl;
 
 #ifdef SHOW_GUI
-          // Initialize an indicator. It turns green if a board is detected.
-          cv::circle(TheInputImageCopy, cv::Point(20,20), 15, cv::Scalar(0,0,255,0), -1);
+           // Print marker borders
+           for (int i = 0; i < TheBoardDetector.getDetectedMarkers().size(); i++) {
+             TheBoardDetector.getDetectedMarkers()[i].draw(TheInputImageCopy,Scalar(0,0,255),1);
+           }
+           
+           // Initialize an indicator. It turns green if a board is detected.
+           cv::circle(TheInputImageCopy, cv::Point(20,20), 15, cv::Scalar(0,0,255,0), -1);
 #endif
           
           // Print board
@@ -229,20 +228,24 @@ int main(int argc,char **argv)
                       TheBoardDetector.getDetectedBoard().Tvec.at<float>(1,0),
                       TheBoardDetector.getDetectedBoard().Tvec.at<float>(2,0)
                       );
+              printf("+\r");
+            } else {
+              printf("-\r");
             }
+            
           }
 
 #ifdef SHOW_GUI
           //show input with augmented information and  the thresholded image
           cv::imshow("in",TheInputImageCopy);
+          
+          key=cv::waitKey(waitTime);//wait for key to be pressed
+          processKey(key);
 #endif
 
 #ifdef SHOW_THRESHOLDED
           cv::imshow("thres",TheBoardDetector.getMarkerDetector().getThresholdedImage());
 #endif
-          
-          key=cv::waitKey(waitTime);//wait for key to be pressed
-          processKey(key);
         } while ( key!=27 && TheVideoCapturer.grab());
 
 
@@ -251,13 +254,8 @@ int main(int argc,char **argv)
     }
 
 }
-/************************************
- *
- *
- *
- *
- ************************************/
-
+      
+#ifdef SHOW_GUI
 void cvTackBarEvents(int pos,void*)
 {
   if (iThresParam1<3) iThresParam1=3;
@@ -276,6 +274,4 @@ void cvTackBarEvents(int pos,void*)
   cv::imshow("in",TheInputImageCopy);
   cv::imshow("thres",TheBoardDetector.getMarkerDetector().getThresholdedImage());
 }
-
-
-
+#endif 

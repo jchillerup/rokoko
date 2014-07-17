@@ -44,6 +44,8 @@ or implied, of Rafael Muñoz Salinas.
 #include "aruco.h"
 #include "lo/lo.h"
 
+//define SHOW_THRESHOLDED
+
 using namespace cv;
 using namespace aruco;
 
@@ -146,7 +148,10 @@ int main(int argc,char **argv)
       }
 
       //Create gui
+      #ifdef SHOW_THRESHOLDED
       cv::namedWindow("thres",1);
+      #endif
+      
       cv::namedWindow("in",1);
       TheBoardDetector.setParams(TheBoardConfig,TheCameraParameters,TheMarkerSize);
       TheBoardDetector.getMarkerDetector().getThresholdParams( ThresParam1,ThresParam2);
@@ -223,8 +228,10 @@ int main(int argc,char **argv)
                     
           //show input with augmented information and  the thresholded image
           cv::imshow("in",TheInputImageCopy);
+          #ifdef SHOW_THRESHOLDED
           cv::imshow("thres",TheBoardDetector.getMarkerDetector().getThresholdedImage());
-         
+          #endif
+          
           key=cv::waitKey(waitTime);//wait for key to be pressed
           processKey(key);
         } while ( key!=27 && TheVideoCapturer.grab());

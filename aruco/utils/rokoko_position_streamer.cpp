@@ -189,7 +189,7 @@ int main(int argc,char **argv)
           float probDetect=TheBoardDetector.detect(TheInputImage);
 
           // Check the speed 
-          cout<<"Time detection="<< (((double) getTickCount() - tick) / getTickFrequency())*1000 <<" milliseconds"<<endl;
+          cout<<"Time detection="<<  <<" milliseconds"<<endl;
 
 #ifdef SHOW_GUI
            // Print marker borders
@@ -225,9 +225,9 @@ int main(int argc,char **argv)
                       TheBoardDetector.getDetectedBoard().Tvec.at<float>(1,0),
                       TheBoardDetector.getDetectedBoard().Tvec.at<float>(2,0)
                       );
-              printf("+\r");
+              printf("%fms +\r", (((double) getTickCount() - tick) / getTickFrequency())*1000);
             } else {
-              printf("-\r");
+              printf("%fms -\r", (((double) getTickCount() - tick) / getTickFrequency())*100);
             }
             
           }

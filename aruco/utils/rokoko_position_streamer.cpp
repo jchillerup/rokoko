@@ -176,7 +176,7 @@ int main(int argc,char **argv)
       do
         {
           TheVideoCapturer.retrieve(TheInputImage);
-          TheInputImage.copyTo(TheInputImageCopy);
+          //TheInputImage.copyTo(TheInputImageCopy);
           resize(TheInputImage, TheInputImageCopy, Size(), 0.5, 0.5, CV_INTER_AREA);
           
           index++; //number of images captured

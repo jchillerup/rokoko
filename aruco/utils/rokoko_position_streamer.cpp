@@ -188,9 +188,6 @@ int main(int argc,char **argv)
           // Detection of the board
           float probDetect=TheBoardDetector.detect(TheInputImage);
 
-          // Check the speed 
-          cout<<"Time detection="<<  <<" milliseconds"<<endl;
-
 #ifdef SHOW_GUI
            // Print marker borders
            for (int i = 0; i < TheBoardDetector.getDetectedMarkers().size(); i++) {

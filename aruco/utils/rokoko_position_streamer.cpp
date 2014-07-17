@@ -138,7 +138,7 @@ int main(int argc,char **argv)
 
       //read first image to get the dimensions
       TheVideoCapturer >> TheInputImage;
-
+      
       //read camera parameters if passed
       if (TheIntrinsicFile != "") {
         TheCameraParameters.readFromXMLFile(TheIntrinsicFile);
@@ -161,16 +161,21 @@ int main(int argc,char **argv)
       int index = 0;
 
       // Set up an OSC recipient
-      lo_address recipient = lo_address_new("192.168.0.113", "14040");
+      lo_address recipient = lo_address_new("192.168.0.111", "14040");
       
       //capture until press ESC or until the end of the video
       do
         {
           TheVideoCapturer.retrieve(TheInputImage);
           TheInputImage.copyTo(TheInputImageCopy);
+          resize(TheInputImage, TheInputImageCopy, Size(), 0.5, 0.5, CV_INTER_AREA);
+          
           index++; //number of images captured
           double tick = (double) getTickCount(); //for checking the speed
-
+          
+          // Resize the image
+          //TheInputImageCopy.resize()
+          
           //Detection of the board
           float probDetect=TheBoardDetector.detect(TheInputImage);
 

@@ -38,16 +38,20 @@ To set the unique identifier of a sensor send a serial 'I' followed by an ID of 
 
 
 ## Position on the stage
-TODO
+The position on the stage is determined by the ArUco software. ArUco is an academic project for augmented reality applications, that is superimposing 3D objects onto the real world, as seen through the 'lens' of one's mobile phone. We use it to get the coordinates of the camera, calculated from the perspective of the markers on the stage floor. The coordinates are given as a pair of vectors called T and R, respectively. From these we can determine the Translation and Rotation of the camera.
+
+The application in `./aruco/utils/rokoko_position_streamer.cpp` implements this using the ArUco library, and streams the vector pair over OSC (on UDP port 14040, as the sensors).
+
+## Facial expression
+We also need to keep track of the eyes and facial expression of the actor, in order to have the 3D model reflect that, too. There is still a lot of research being made in that regard, and currently we're looking at two different models:
+
+* [FaceTracker](https://github.com/kylemcdonald/FaceTracker) is a markerless face tracking implementation. The license disallows commercial use of the software, but is unclear whether the ROKOKO project constitutes commercial use when no money is earned on selling mocap suits and we're sharing all the other code.
+* [eyeLike](https://github.com/trishume/eyeLike) is a library that tracks eye movements in a webcam image. There is a fork of that project [here](https://github.com/jchillerup/rokoko-facecap) that, besides eyes, tracks green markers in the face and streams the coordinates of those over OSC.
 
 ## Other tools, legacy / WIP - not complete
-./imuOscVisualizer is a somewhat incomplete openFrameworks tool for visualizing the OSC data. We primarily use Unity for the visualization now.
-
-./imuTestVisualizer is an openframeWorks skeleton animation test connecting directly to the sensors. 
-
-./Aruco WIP of a positioning system using the AR aruco library, a marker carpet and a camera on the knee.
-
-./camcalib is for making opencv instrinsics for the camera
+* `./legacy/imuOscVisualizer` is a somewhat incomplete openFrameworks tool for visualizing the OSC data. We primarily use Unity for the visualization now.
+* `./legacy/imuTestVisualizer` is an openframeWorks skeleton animation test connecting directly to the sensors. 
+* `./legacy/camcalib` is for making opencv instrinsics for the camera
 
 
 

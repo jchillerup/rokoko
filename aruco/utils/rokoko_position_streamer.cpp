@@ -37,7 +37,7 @@ or implied, of Rafael Muñoz Salinas.
 **/
 
 //define SHOW_THRESHOLDED
-//define SHOW_GUI
+#define SHOW_GUI
 
 #include <iostream>
 #include <fstream>
@@ -68,7 +68,7 @@ void cvTackBarEvents(int pos,void*);
 pair<double,double> AvrgTime(0,0); //determines the average time required for detection
 double ThresParam1,ThresParam2;
 int iThresParam1,iThresParam2;
-int waitTime=0;
+int waitTime=1;
 
 bool readArguments ( int argc,char **argv )
 {
@@ -112,23 +112,25 @@ int main(int argc,char **argv)
 {
   try
     {
-      if (  readArguments (argc,argv)==false) return 0;
+      if (  readArguments (argc,argv) == false) return 0;
       //parse arguments
       TheBoardConfig.readFromFile(TheBoardConfigFile);
 
       //read from camera or from  file
-      if (TheInputVideo.find("live")!=string::npos) {
+      if (TheInputVideo.find("live") != string::npos) {
         int vIdx=0;
         
         //check if the :idx is here
         char cad[100];
-        if (TheInputVideo.find(":")!=string::npos) {
-          std::replace(TheInputVideo.begin(),TheInputVideo.end(),':',' ');
-          sscanf(TheInputVideo.c_str(),"%s %d",cad,&vIdx);
+        if (TheInputVideo.find(":") != string::npos) {
+          std::replace(TheInputVideo.begin(), TheInputVideo.end(), ':', ' ');
+          sscanf(TheInputVideo.c_str(), "%s %d", cad, &vIdx);
         }
 
-        cout<<"Opening camera index "<<vIdx<<endl;
+        cout<<"Opening camera index " << vIdx << endl;
         TheVideoCapturer.open(vIdx);
+
+        cout << TheVideoCapturer.get(CV_CAP_PROP_FOURCC) << endl;
         waitTime=10;
       }
       else {
@@ -137,7 +139,7 @@ int main(int argc,char **argv)
       
       //check video is open
       if (!TheVideoCapturer.isOpened()) {
-        cerr<<"Could not open video"<<endl;
+        cerr << "Could not open video" << endl;
         return -1;
       }
 
@@ -161,7 +163,7 @@ int main(int argc,char **argv)
       TheBoardDetector.set_repj_err_thres(1.5);
 
 #ifdef SHOW_GUI
-      cv::namedWindow("in",1);      
+      cv::namedWindow("in",1);
       iThresParam1=ThresParam1;
       iThresParam2=ThresParam2;
       cv::createTrackbar("ThresParam1", "in", &iThresParam1, 13, cvTackBarEvents);
@@ -172,15 +174,16 @@ int main(int argc,char **argv)
       int index = 0;
 
       // Set up an OSC recipient
-      lo_address recipient = lo_address_new("192.168.0.111", "14040");
+      lo_address recipient = lo_address_new("10.10.10.218", "14040");
       
       //capture until press ESC or until the end of the video
       do
         {
-          TheVideoCapturer.retrieve(TheInputImage);
+          TheVideoCapturer.read(TheInputImage);
           
           // Copy the image into the TheInputImageCopy while at the same time resizing it
-          resize(TheInputImage, TheInputImageCopy, Size(), 0.5, 0.5, CV_INTER_AREA);
+          resize(TheInputImage, TheInputImageCopy, Size(), 1, 1, CV_INTER_AREA);
+          //TheInputImage >> TheInputImageCopy;
           
           index++; //number of images captured
           double tick = (double) getTickCount(); //for checking the speed
@@ -240,7 +243,7 @@ int main(int argc,char **argv)
 #ifdef SHOW_THRESHOLDED
           cv::imshow("thres",TheBoardDetector.getMarkerDetector().getThresholdedImage());
 #endif
-        } while ( key!=27 && TheVideoCapturer.grab());
+        } while ( key!=27 && TheVideoCapturer.grab() );
 
 
     } catch (std::exception &ex) {

@@ -228,7 +228,7 @@ int main(int argc,char **argv)
 
               // Send an OSC packet to with the RT vectors
               lo_send(recipient,
-                      "/camera",
+                      osc_address.c_str(),
                       "ffffff",
                       TheBoardDetector.getDetectedBoard().Rvec.at<float>(0,0),
                       TheBoardDetector.getDetectedBoard().Rvec.at<float>(1,0),

@@ -62,6 +62,10 @@ BoardConfiguration TheBoardConfig;
 BoardDetector TheBoardDetector;
 
 string TheOutVideoFilePath;
+
+string osc_ip;
+string osc_address;
+
 cv::VideoWriter VWriter;
 
 void cvTackBarEvents(int pos,void*);
@@ -72,22 +76,22 @@ int waitTime=1;
 
 bool readArguments ( int argc,char **argv )
 {
-
-  if (argc<3) {
+  if (argc<6) {
     cerr<<"Invalid number of arguments"<<endl;
-    cerr<<"Usage: (in.avi|live) boardConfig.yml [intrinsics.yml] [size]"<<endl;
+    cerr<<"Usage: (in.avi|live:idx) boardConfig.yml intrinsics.yml size osc_ip osc_address"<<endl;
     return false;
   }
+  
   TheInputVideo=argv[1];
   TheBoardConfigFile=argv[2];
-  if (argc>=4)
-    TheIntrinsicFile=argv[3];
-  if (argc>=5)
-    TheMarkerSize=atof(argv[4]);
+  TheIntrinsicFile=argv[3];
+  TheMarkerSize=atof(argv[4]);
+  osc_ip = std::string(argv[5]);
+  osc_address = std::string(argv[6]);
 
-  if (argc==4)
-    cerr<<"NOTE: You need makersize to see 3d info!!!!"<<endl;
-
+  // Prepend a slash to osc_address to make it more osc-like
+  osc_address.insert(0, 1, '/');
+  
   return true;
 }
 
@@ -112,10 +116,18 @@ int main(int argc,char **argv)
 {
   try
     {
-      if (  readArguments (argc,argv) == false) return 0;
+      if ( !readArguments (argc,argv)) return 1;
+
       //parse arguments
       TheBoardConfig.readFromFile(TheBoardConfigFile);
 
+      cout << "ROKOKO Position Streamer" << endl;
+      cout << "Jens Christian Hillerup <jc@bitblueprint.com>" << endl;
+      cout << "Streaming from: " << TheInputVideo << endl;
+      cout << "Streaming to:   " << osc_ip << endl;
+      cout << "OSC address:    " << osc_address << endl;
+      
+      
       //read from camera or from  file
       if (TheInputVideo.find("live") != string::npos) {
         int vIdx=0;
@@ -174,7 +186,7 @@ int main(int argc,char **argv)
       int index = 0;
 
       // Set up an OSC recipient
-      lo_address recipient = lo_address_new("10.10.10.218", "14040");
+      lo_address recipient = lo_address_new(osc_ip.c_str(), "14040");
       
       //capture until press ESC or until the end of the video
       do

@@ -36,6 +36,7 @@ void setup (void)
  
   // have to send on master in, *slave out*
   pinMode(MISO, OUTPUT);
+  pinMode(MOSI, INPUT);
   pinMode(SS, INPUT);
   
   // turn on SPI in slave mode

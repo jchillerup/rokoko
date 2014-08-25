@@ -60,9 +60,15 @@ void * work_sensor(void * v_args) {
   // Prepare a datastructure for receiving payloads.
   float * payload = malloc(4 * sizeof(float));
 
+  // Wait a second after opening the device for Arduino Unos to have
+  // their initialization done.
+  sleep(3);
+  
   // Flush any data that might be in the serial buffer already
   tcflush(args->tty_fd, TCIOFLUSH);
 
+  sleep(3);
+  
   // Get the ident of the sensor
   write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
 #ifdef SLEEP
@@ -78,7 +84,7 @@ void * work_sensor(void * v_args) {
   printf("%s: %s\n", args->devnode, sensor_ident);
   
   // Loop if DEBUG is false OR if it's true and num_packets < 100.
-  while ( (DEBUG ^ 1) || (DEBUG && num_packets < 100) )
+  while ( (DEBUG ^ 1) || (DEBUG && num_packets < 1000) )
     {
       // Flush any data that might be in the serial buffer already
       tcflush(args->tty_fd, TCIOFLUSH);

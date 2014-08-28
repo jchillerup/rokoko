@@ -37,6 +37,7 @@ typedef struct sensor_args {
   char * devnode;
   int tty_fd;
   lo_address* recipient;
+  int sleep_before_read;
 } sensor_args;
 
 
@@ -82,6 +83,9 @@ void * work_sensor(void * v_args) {
   }
   
   printf("%s: %s\n", args->devnode, sensor_ident);
+
+  // wait for the other sensors to get identified before starting reading
+  sleep(args->sleep_before_read);
   
   // Loop if DEBUG is false OR if it's true and num_packets < 100.
   while ( (DEBUG ^ 1) || (DEBUG && num_packets < 1000) )
@@ -169,6 +173,7 @@ int main(int argc,char** argv)
     arg_structs[i-1].devnode = argv[i];
     arg_structs[i-1].tty_fd = fd;
     arg_structs[i-1].recipient = &recipient;
+    arg_structs[i-1].sleep_before_read = argc-i+1;
 
     pthread_create(&threads[i-1], NULL, work_sensor, &arg_structs[i-1]);
     sleep(1);

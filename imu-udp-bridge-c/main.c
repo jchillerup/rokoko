@@ -171,6 +171,7 @@ int main(int argc,char** argv)
     arg_structs[i-1].recipient = &recipient;
 
     pthread_create(&threads[i-1], NULL, work_sensor, &arg_structs[i-1]);
+    sleep(1);
   }
 
   for (i = 0; i < argc-1; i++) {

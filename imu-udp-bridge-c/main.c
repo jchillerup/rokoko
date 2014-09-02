@@ -10,6 +10,7 @@
 #include <time.h>
 #include "settings.h"
 
+#define DEBUG 1
 
 void prepare_terminal(struct termios * tio) {
   memset(tio, 0, sizeof(*tio));
@@ -26,8 +27,8 @@ int open_device(char* address, struct termios * tio) {
   int tty_fd;
 
   tty_fd = open(address, O_RDWR | O_NOCTTY | O_NONBLOCK);
-  cfsetospeed(tio, B115200);            // 115200 baud
-  cfsetispeed(tio, B115200);            // 115200 baud
+  cfsetospeed(tio, B9600);            // 115200 baud
+  cfsetispeed(tio, B9600);            // 115200 baud
   tcsetattr(tty_fd, TCSANOW, tio);
 
   return tty_fd;
@@ -111,7 +112,17 @@ void * work_sensor(void * v_args) {
         fail_packets++;
         continue;
       }
-      
+
+      // Clean the data
+      if (
+          payload[0] < -1.0 || payload[0] > 1.0 ||
+          payload[1] < -1.0 || payload[1] > 1.0 ||
+          payload[2] < -1.0 || payload[2] > 1.0 ||
+          payload[3] < -1.0 || payload[3] > 1.0
+          ) {
+        fail_packets++;
+        continue;
+      }
       if (DEBUG)
         printf("%.2f, %.2f, %.2f, %.2f\n", payload[1], payload[2], payload[3], payload[0]);
 

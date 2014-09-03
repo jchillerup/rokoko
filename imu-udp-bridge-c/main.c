@@ -10,7 +10,6 @@
 #include <time.h>
 #include "settings.h"
 
-#define DEBUG 1
 char * osc_address;
 char * osc_ip;
 

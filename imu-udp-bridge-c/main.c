@@ -66,19 +66,21 @@ void * work_sensor(void * v_args) {
 
   // Wait a second after opening the device for Arduino Unos to have
   // their initialization done.
-  sleep(3);
+  sleep(2);
 
   // Flush any data that might be in the serial buffer already
   tcflush(args->tty_fd, TCIOFLUSH);
 
-  sleep(3);
-  
-  // Get the ident of the sensor
-  write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
+  sleep(2);
+
+  while(sensor_ident[0] < '0' || sensor_ident[0] > '9') {
+    // Get the ident of the sensor
+    write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
 #ifdef SLEEP
-  nanosleep(&delay_before_read, NULL);
+    nanosleep(&delay_before_read, NULL);
 #endif
-  read(args->tty_fd, sensor_ident, 16);
+    read(args->tty_fd, sensor_ident, 16);
+  }
 
   // clear out some of the bytes of the name
   for (i=2; i<16; i++) {
@@ -91,46 +93,45 @@ void * work_sensor(void * v_args) {
   sleep(args->sleep_before_read);
   
   // Loop if DEBUG is false OR if it's true and num_packets < 100.
-  while ( (DEBUG ^ 1) || (DEBUG && num_packets < 1000) )
-    {
-      // Flush any data that might be in the serial buffer already
-      tcflush(args->tty_fd, TCIOFLUSH);
+  while ( (DEBUG ^ 1) || (DEBUG && num_packets < 1000) ) {
+    // Flush any data that might be in the serial buffer already
+    tcflush(args->tty_fd, TCIOFLUSH);
       
-      // Write a 'g' to the Arduino
-      write(args->tty_fd, &GET_READING_BYTE, 1);
+    // Write a 'g' to the Arduino
+    write(args->tty_fd, &GET_READING_BYTE, 1);
 
 #ifdef SLEEP
-      // Wait for a little bit
-      nanosleep(&delay_before_read, NULL);
+    // Wait for a little bit
+    nanosleep(&delay_before_read, NULL);
 #endif
 
-      // Put the output from the Arduino in `payload'. `read' will block.
-      read_out = read(args->tty_fd, payload, 16);
-      if (read_out != 16) continue;
+    // Put the output from the Arduino in `payload'. `read' will block.
+    read_out = read(args->tty_fd, payload, 16);
+    if (read_out != 16) continue;
       
-      num_packets++;
+    num_packets++;
 
-      if (read_out < 16) {
-        fail_packets++;
-        continue;
-      }
-
-      // Clean the data
-      if (
-          payload[0] < -1.0 || payload[0] > 1.0 ||
-          payload[1] < -1.0 || payload[1] > 1.0 ||
-          payload[2] < -1.0 || payload[2] > 1.0 ||
-          payload[3] < -1.0 || payload[3] > 1.0
-          ) {
-        fail_packets++;
-        continue;
-      }
-      if (DEBUG)
-        printf("%.2f, %.2f, %.2f, %.2f\n", payload[1], payload[2], payload[3], payload[0]);
-      
-      // Put the payload into an OSC message.
-      lo_send(*(args->recipient), osc_address, "sffff", sensor_ident, payload[1], payload[2], payload[3], payload[0]);
+    if (read_out < 16) {
+      fail_packets++;
+      continue;
     }
+
+    // Clean the data
+    if (
+        payload[0] < -1.0 || payload[0] > 1.0 ||
+        payload[1] < -1.0 || payload[1] > 1.0 ||
+        payload[2] < -1.0 || payload[2] > 1.0 ||
+        payload[3] < -1.0 || payload[3] > 1.0
+        ) {
+      fail_packets++;
+      continue;
+    }
+    if (DEBUG)
+      printf("%.2f, %.2f, %.2f, %.2f\n", payload[1], payload[2], payload[3], payload[0]);
+      
+    // Put the payload into an OSC message.
+    lo_send(*(args->recipient), osc_address, "sffff", sensor_ident, payload[1], payload[2], payload[3], payload[0]);
+  }
 
   printf("num_packets: %d, fail_packets: %d\n", num_packets, fail_packets);
   

@@ -11,6 +11,8 @@
 #include "settings.h"
 
 #define DEBUG 1
+char * osc_address;
+char * osc_ip;
 
 void prepare_terminal(struct termios * tio) {
   memset(tio, 0, sizeof(*tio));
@@ -65,7 +67,7 @@ void * work_sensor(void * v_args) {
   // Wait a second after opening the device for Arduino Unos to have
   // their initialization done.
   sleep(3);
-  
+
   // Flush any data that might be in the serial buffer already
   tcflush(args->tty_fd, TCIOFLUSH);
 
@@ -125,9 +127,9 @@ void * work_sensor(void * v_args) {
       }
       if (DEBUG)
         printf("%.2f, %.2f, %.2f, %.2f\n", payload[1], payload[2], payload[3], payload[0]);
-
+      
       // Put the payload into an OSC message.
-      lo_send(*(args->recipient), "/sensor", "sffff", sensor_ident, payload[1], payload[2], payload[3], payload[0]);
+      lo_send(*(args->recipient), osc_address, "sffff", sensor_ident, payload[1], payload[2], payload[3], payload[0]);
     }
 
   printf("num_packets: %d, fail_packets: %d\n", num_packets, fail_packets);
@@ -163,34 +165,38 @@ int main(int argc,char** argv)
     return(255);
   }
 
-
-  if (argc == 1) {
+  if (argc <= 3) {
     printf("No device node(s) given\n");
     return(255);
   }
+
+  osc_ip = argv[1];
+  osc_address = argv[2];
   
-  printf("ROKOKO streamer starting, sending to %s\n", fp_recipient);  
+  printf("ROKOKO positure streamer starting, sending to osc://%s%s\n", osc_ip, osc_address);  
 
   prepare_terminal(&tio);
 
   // Loop through all commandline args and start a thread for each sensor we
   // want to look at.
-  for (i = 1; i < argc; i++) {
+  for (i = 3; i < argc; i++) {
     int fd = open_device(argv[i], &tio);
-    lo_address recipient = lo_address_new(fp_recipient, "14040");
+    lo_address recipient = lo_address_new(osc_ip, "14040");
     
     // Construct the arguments struct and spawn a thread
     //sensor_args * args = malloc(sizeof(sensor_args));
-    arg_structs[i-1].devnode = argv[i];
-    arg_structs[i-1].tty_fd = fd;
-    arg_structs[i-1].recipient = &recipient;
-    arg_structs[i-1].sleep_before_read = argc-i+1;
+    arg_structs[i-3].devnode = argv[i];
+    arg_structs[i-3].tty_fd = fd;
+    arg_structs[i-3].recipient = &recipient;
+    arg_structs[i-3].sleep_before_read = argc-(i-3)+1;
 
-    pthread_create(&threads[i-1], NULL, work_sensor, &arg_structs[i-1]);
+    pthread_create(&threads[i-3], NULL, work_sensor, &arg_structs[i-3]);
+
+    // Block for a second so the sensors take turns in starting
     sleep(1);
   }
 
-  for (i = 0; i < argc-1; i++) {
+  for (i = 0; i < argc-3; i++) {
     pthread_join(threads[i], NULL);
   }
   

@@ -24,6 +24,8 @@
 //  This example sketch shows how to calculate residual accelerations in the body frame,
 //  compensated for gravity.
 
+#define I2C_SPI_TOGGLE
+
 #include <Wire.h>
 #include "I2Cdev.h"
 #include "MPU9150Lib.h"
@@ -60,7 +62,7 @@ MPU9150Lib MPU;                                              // the MPU object
 #define MPU_LPF_RATE   5
 
 //  SERIAL_PORT_SPEED defines the speed to use for the debug serial port
-#define  SERIAL_PORT_SPEED  115200
+#define  SERIAL_PORT_SPEED  9600
 
 #define NOP 0
 #define CALIB_ACCEL 1
@@ -112,7 +114,7 @@ void setup()
 
   delay(5);
   
-  
+#ifdef I2C_SPI_TOGGLE
   // Prepare the SPI
   // have to send on master in, *slave out*
   pinMode(MISO, OUTPUT);
@@ -125,6 +127,11 @@ void setup()
   // now turn on interrupts
 //  SPCR |= _BV(SPIE);
   SPI.attachInterrupt();
+#else
+  // Prepare the I2C
+  Wire.begin(1);
+  Wire.onRequest(i2c_handler);
+#endif
 
   LOOPSTATE = INIT;
 }
@@ -347,7 +354,7 @@ void loop()
 }
 
 
-
+#ifdef I2C_SPI_TOGGLE 
 // SPI interrupt routine
 ISR (SPI_STC_vect)
 {
@@ -359,6 +366,10 @@ ISR (SPI_STC_vect)
   // For now we're just sending the byte that gets queried on the SPI interface.
   SPDR = ((byte*) MPU.m_fusedQuaternion)[c];
 }
-
+#else
+void i2c_handler() {
+  Wire.write((char*) MPU.m_fusedQuaternion);
+}
+#endif
 
 

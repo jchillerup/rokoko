@@ -72,7 +72,6 @@ MPU9150Lib MPU;                                              // the MPU object
 MPUQuaternion gravity;                                     // this is our earth frame gravity vector
 char LOOPSTATE = NOP;
 char LEDSTATE = LOW;
-int delayTime = 10;
 
 MPUQuaternion rotatedGravity;                            // this is our body frame gravity vector
 MPUQuaternion fusedConjugate;                            // this is the conjugate of the fused quaternion
@@ -113,19 +112,19 @@ void setup()
     *ptr++ = EEPROM.read(ident_eeprom_address + i);
 
   delay(5);
-  
+
 #ifdef I2C_SPI_TOGGLE
   // Prepare the SPI
   // have to send on master in, *slave out*
   pinMode(MISO, OUTPUT);
   pinMode(MOSI, INPUT);
   pinMode(SS, INPUT);
-  
+
   // turn on SPI in slave mode
   SPCR |= _BV(SPE);
 
   // now turn on interrupts
-//  SPCR |= _BV(SPIE);
+  //  SPCR |= _BV(SPIE);
   SPI.attachInterrupt();
 #else
   // Prepare the I2C
@@ -310,17 +309,9 @@ void loop()
         digitalWrite(13, LEDSTATE);
         break;
 
-      case 'd':
-      case 'D':
-        delayTime += (c == 'd' ? -1 : 1) * 5; // multiply with -1 if d, multiply with 1 if D
-        if (delayTime < 0) {
-          delayTime = 0;
-        }
-        if (delayTime > 100) {
-          delayTime = 100;
-        }
-
-        Serial.println(delayTime);
+      case 't':
+      case 'T':
+        Serial.print("IMU             ");
         break;
 
       case 'i':
@@ -347,22 +338,22 @@ void loop()
     //  rotate the gravity vector into the body frame
     MPUQuaternionMultiply(gravity, MPU.m_fusedQuaternion, qTemp);
     MPUQuaternionMultiply(fusedConjugate, qTemp, rotatedGravity);
-    
+
     // Allow for polling of data
     LOOPSTATE = NOP;
   }
 }
 
 
-#ifdef I2C_SPI_TOGGLE 
+#ifdef I2C_SPI_TOGGLE
 // SPI interrupt routine
 ISR (SPI_STC_vect)
 {
-  // We're getting something on the SPI bus. Take note of the time so we can timeout 
+  // We're getting something on the SPI bus. Take note of the time so we can timeout
   // if we don't get queried for more bytes in a timely fashion.
   byte c = SPDR;  // grab byte from SPI Data Register
   long start = millis();
-  
+
   // For now we're just sending the byte that gets queried on the SPI interface.
   SPDR = ((byte*) MPU.m_fusedQuaternion)[c];
 }
@@ -371,5 +362,4 @@ void i2c_handler() {
   Wire.write((char*) MPU.m_fusedQuaternion);
 }
 #endif
-
 

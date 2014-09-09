@@ -10,8 +10,13 @@
 #include <time.h>
 #include "settings.h"
 
-char * osc_address;
+#define ROKOKO_IMU 1
+#define ROKOKO_COLOR 2
+
+char * osc_suit_id;
 char * osc_ip;
+
+struct timespec delay_before_read;
 
 void prepare_terminal(struct termios * tio) {
   memset(tio, 0, sizeof(*tio));
@@ -40,104 +45,14 @@ typedef struct sensor_args {
   int tty_fd;
   lo_address* recipient;
   int sleep_before_read;
+  char sensor_ident[16];
+  int sensor_type;
 } sensor_args;
 
-
-void * work_sensor(void * v_args) {
-  int i;
-  sensor_args * args = (sensor_args *) v_args;
-  
-  const unsigned char GET_READING_BYTE = 'g';
-  const unsigned char GET_IDENTIFIER_BYTE = 'i';
-  
-  int num_packets = 0;
-  int fail_packets = 0;
-  char sensor_ident[16];
-
-  // Set up a delay time between reads
-  struct timespec delay_before_read;
-  int read_out = 0;
-  delay_before_read.tv_sec = 0;
-  delay_before_read.tv_nsec = 8 * 1e6; // 1e6 nanoseconds = 1 millisecond
-
-  // Prepare a datastructure for receiving payloads.
-  float * payload = malloc(4 * sizeof(float));
-
-  // Wait a second after opening the device for Arduino Unos to have
-  // their initialization done.
-  sleep(2);
-
-  // Flush any data that might be in the serial buffer already
-  tcflush(args->tty_fd, TCIOFLUSH);
-
-  sleep(2);
-
-  while(sensor_ident[0] < '0' || sensor_ident[0] > '9') {
-    // Get the ident of the sensor
-    write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
-#ifdef SLEEP
-    nanosleep(&delay_before_read, NULL);
-#endif
-    read(args->tty_fd, sensor_ident, 16);
-  }
-
-  // clear out some of the bytes of the name
-  for (i=2; i<16; i++) {
-    sensor_ident[i] = 0;
-  }
-  
-  printf("%s: %s\n", args->devnode, sensor_ident);
-
-  // wait for the other sensors to get identified before starting reading
-  sleep(args->sleep_before_read);
-  
-  // Loop if DEBUG is false OR if it's true and num_packets < 100.
-  while ( (DEBUG ^ 1) || (DEBUG && num_packets < 1000) ) {
-    // Flush any data that might be in the serial buffer already
-    tcflush(args->tty_fd, TCIOFLUSH);
-      
-    // Write a 'g' to the Arduino
-    write(args->tty_fd, &GET_READING_BYTE, 1);
-
-#ifdef SLEEP
-    // Wait for a little bit
-    nanosleep(&delay_before_read, NULL);
-#endif
-
-    // Put the output from the Arduino in `payload'. `read' will block.
-    read_out = read(args->tty_fd, payload, 16);
-    if (read_out != 16) continue;
-      
-    num_packets++;
-
-    if (read_out < 16) {
-      fail_packets++;
-      continue;
-    }
-
-    // Clean the data
-    if (
-        payload[0] < -1.0 || payload[0] > 1.0 ||
-        payload[1] < -1.0 || payload[1] > 1.0 ||
-        payload[2] < -1.0 || payload[2] > 1.0 ||
-        payload[3] < -1.0 || payload[3] > 1.0
-        ) {
-      fail_packets++;
-      continue;
-    }
-    if (DEBUG)
-      printf("%.2f, %.2f, %.2f, %.2f\n", payload[1], payload[2], payload[3], payload[0]);
-      
-    // Put the payload into an OSC message.
-    lo_send(*(args->recipient), osc_address, "sffff", sensor_ident, payload[1], payload[2], payload[3], payload[0]);
-  }
-
-  printf("num_packets: %d, fail_packets: %d\n", num_packets, fail_packets);
-  
-  free(payload);
-
-  pthread_exit(NULL);
-}
+// TODO: make these includes a bit more proper
+#include "prepare_sensor.c"
+#include "work_sensor.c"
+#include "work_glove.c"
 
 
 int main(int argc,char** argv)
@@ -148,22 +63,6 @@ int main(int argc,char** argv)
   sensor_args arg_structs[ argc - 1 ];
   int i;
   struct termios tio;
-  FILE * file;
-  char c;
-  char * fp_recipient = calloc ( 4*3 + 3 + 1, sizeof(char));
-  char * r_ptr = fp_recipient;
-
-  // Read the IP of the recipient from recipient.txt
-  file = fopen( "recipient.txt" , "r");
-  if (file) {
-    while ((c = getc(file)) != EOF && c != '\n' && c != '\r' && !feof(file)) {
-      *(r_ptr++) = c;
-    }
-    *(r_ptr) = 0;
-  } else {
-    printf("recipient.txt missing.\n");
-    return(255);
-  }
 
   if (argc <= 3) {
     printf("No device node(s) given\n");
@@ -171,26 +70,42 @@ int main(int argc,char** argv)
   }
 
   osc_ip = argv[1];
-  osc_address = argv[2];
+  osc_suit_id = argv[2];
   
-  printf("ROKOKO positure streamer starting, sending to osc://%s%s\n", osc_ip, osc_address);  
-
+  printf("ROKOKO positure and color streamer starting, sending to osc://%s%s\n", osc_ip, osc_suit_id);  
   prepare_terminal(&tio);
 
+  // Set up a delay time between reads
+  delay_before_read.tv_sec = 0;
+  delay_before_read.tv_nsec = 8 * 1e6; // 1e6 nanoseconds = 1 millisecond
+  
   // Loop through all commandline args and start a thread for each sensor we
   // want to look at.
   for (i = 3; i < argc; i++) {
     int fd = open_device(argv[i], &tio);
     lo_address recipient = lo_address_new(osc_ip, "14040");
+    int sensor_type;
     
     // Construct the arguments struct and spawn a thread
     //sensor_args * args = malloc(sizeof(sensor_args));
     arg_structs[i-3].devnode = argv[i];
     arg_structs[i-3].tty_fd = fd;
     arg_structs[i-3].recipient = &recipient;
-    arg_structs[i-3].sleep_before_read = argc-(i-3)+1;
+    arg_structs[i-3].sleep_before_read = argc - (i - 3) + 1;
 
-    pthread_create(&threads[i-3], NULL, work_sensor, &arg_structs[i-3]);
+    sensor_type = prepare_sensor(&arg_structs[i-3]);
+    
+    switch (sensor_type ) {
+    case ROKOKO_IMU:
+      pthread_create(&threads[i-3], NULL, work_sensor, &arg_structs[i-3]);
+      break;
+    case ROKOKO_COLOR:
+      pthread_create(&threads[i-3], NULL, work_glove, &arg_structs[i-3]);
+      break;
+    default:
+      printf("Could not determine sensor type for: TODO (%d)\n", sensor_type);
+      break;
+    }
 
     // Block for a second so the sensors take turns in starting
     sleep(1);

@@ -18,7 +18,7 @@ int prepare_sensor (void * v_args) {
   sleep(2);
 
   //while( ~((sensor_ident[0] >= '0' && sensor_ident[0] <= '9') || (sensor_ident[0] >= 'A' && sensor_ident[0] <= 'Z')) )  {
-  while(i == 0 || sensor_ident[0] < 0x30 || sensor_ident[0] > 0x5a) {
+  while(i == 0 || sensor_ident[0] != 'I' || sensor_ident[0] != 'C') {
     // Get the ident of the sensor
     write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
 #ifdef SLEEP

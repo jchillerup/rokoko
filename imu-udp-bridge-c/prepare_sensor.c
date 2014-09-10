@@ -5,7 +5,7 @@ int prepare_sensor (void * v_args) {
   const unsigned char GET_TYPE_BYTE = 't';
   int i = 0;
 
-  char * sensor_ident = args->sensor_ident;
+  char sensor_ident[16];
   char sensor_type_string[16];
   
   // Wait a second after opening the device for Arduino Unos to have
@@ -18,10 +18,11 @@ int prepare_sensor (void * v_args) {
   sleep(2);
 
   //while( ~((sensor_ident[0] >= '0' && sensor_ident[0] <= '9') || (sensor_ident[0] >= 'A' && sensor_ident[0] <= 'Z')) )  {
-  while(i == 0 || (sensor_ident[0] != 'I' && sensor_ident[0] != 'C')) {
+  while(i == 0 || (sensor_ident[0] < 0x30 && sensor_ident[0] > 0x5a)) {
     // Get the ident of the sensor
     write(args->tty_fd, &GET_IDENTIFIER_BYTE, 1);
 #ifdef SLEEP
+    nanosleep(&delay_before_read, NULL);
     nanosleep(&delay_before_read, NULL);
 #endif
     read(args->tty_fd, sensor_ident, 16);
@@ -29,6 +30,10 @@ int prepare_sensor (void * v_args) {
     i++;
   }
   
+#ifdef SLEEP
+  nanosleep(&delay_before_read, NULL);
+#endif
+  tcflush(args->tty_fd, TCIOFLUSH);
 #ifdef SLEEP
   nanosleep(&delay_before_read, NULL);
 #endif
@@ -56,6 +61,8 @@ int prepare_sensor (void * v_args) {
   }
  
   printf("%s: %s (%s)\n", args->devnode, sensor_ident, sensor_type_string);
+  
+  memcpy(args->sensor_ident, sensor_ident, 16);
 
   if (sensor_type_string[0] == 'I') {
     args->sensor_type = ROKOKO_IMU;

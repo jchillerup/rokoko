@@ -39,7 +39,7 @@ int prepare_sensor (void * v_args) {
 #endif
   
   i=0;
-  while(i == 0 || ~(sensor_type_string[0] == 'I' || sensor_type_string[0] == 'C')) {
+  while(i == 0 || (sensor_type_string[0] != 'I' && sensor_type_string[0] != 'C')) {
     // Get the sensor type
     write(args->tty_fd, &GET_TYPE_BYTE, 1);
 #ifdef SLEEP

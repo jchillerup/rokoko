@@ -100,6 +100,11 @@ int findLargestContour(vector<vector<Point> > contours) {
   return largestContourIdx;
 }
 
+Point getContourCentroid(vector<Point> contour) {
+  Moments m = moments(contour);
+  return Point((int)(m.m10/m.m00), (int)(m.m01/m.m00));
+}
+
 // We assume the pupil is going to be in the darkest point of a rectangle containing the eye area.
 void findDarkestPoint(cv::Mat frame, cv::Rect region) {
   cv::Mat eye = frame(region);
@@ -127,7 +132,7 @@ void findDarkestPoint(cv::Mat frame, cv::Rect region) {
   largestContour = findLargestContour(contours);
 
   float size;
-  int largestContourWithin;
+  int largestContourWithin = -1;
   // Find the largest of the contours that have the largestContour as parent.
   for (int i=0; i < hierarchy.size(); i++) {
     if (hierarchy[i][3] == largestContour) {
@@ -138,13 +143,14 @@ void findDarkestPoint(cv::Mat frame, cv::Rect region) {
     }
   }
 
-  Moments m = moments(contours[largestContourWithin]);
-  Point center = Point((int)(m.m10/m.m00), (int)(m.m01/m.m00));
-  Point centerOffset = center + Point(region.x, region.y);
+  if (largestContourWithin != -1) {
+    Point center = getContourCentroid(contours[largestContourWithin]);
+    Point centerOffset = center + Point(region.x, region.y);
   
-  circle(frame, centerOffset, 1, Scalar(255, 255, 0));
+    circle(frame, centerOffset, 1, Scalar(255, 255, 0));
   
-  imshow("eye r", eye_thresholded);
+    imshow("eye r", eye_thresholded);
+  }
   // Debug; draw the region that we're looking inside
   rectangle(frame, region, 0, 1);
 }

@@ -2,6 +2,7 @@
 #include "opencv2/opencv.hpp"
 #include "rokoko-common.c"
 #include "lo/lo.h"
+#include "sallycap.hpp"
 
 using namespace std;
 using namespace cv;
@@ -15,23 +16,21 @@ int iHighV = 255;
 int contourAreaMin = 100;
 int eyeThresh = 52;
 
-void findFacialMarkersGOR(cv::Mat frame, rokoko_face* cur_face);
-void findFacialMarkersHSV(cv::Mat frame, rokoko_face* cur_face);
-void findDarkestPoint(cv::Mat frame, cv::Rect region);
+
 
 void spawnSettingsWindow() {
   cv::namedWindow("Tunables", CV_WINDOW_NORMAL);
   cv::moveWindow("Tunables", 400, 100);
   
   // Add trackbars for the HSV settings
-  createTrackbar("LowH",  "Settings", &iLowH, 179); //Hue (0 - 179)
-  createTrackbar("HighH", "Settings", &iHighH, 179);
-  createTrackbar("LowS",  "Settings", &iLowS, 255); //Saturation (0 - 255)
-  createTrackbar("HighS", "Settings", &iHighS, 255);
-  createTrackbar("LowV",  "Settings", &iLowV, 255); //Value (0 - 255)
-  createTrackbar("HighV", "Settings", &iHighV, 255);
-  createTrackbar("ContourAreaMin", "Settings", &contourAreaMin, 1000);
-  createTrackbar("eyeThresh", "Settings", &eyeThresh, 255);
+  createTrackbar("LowH",  "Tunables", &iLowH, 179); //Hue (0 - 179)
+  createTrackbar("HighH", "Tunables", &iHighH, 179);
+  createTrackbar("LowS",  "Tunables", &iLowS, 255); //Saturation (0 - 255)
+  createTrackbar("HighS", "Tunables", &iHighS, 255);
+  createTrackbar("LowV",  "Tunables", &iLowV, 255); //Value (0 - 255)
+  createTrackbar("HighV", "Tunables", &iHighV, 255);
+  createTrackbar("ContourAreaMin", "Tunables", &contourAreaMin, 1000);
+  createTrackbar("eyeThresh", "Tunables", &eyeThresh, 255);
 }
 
 int main(int, char**)
@@ -57,8 +56,10 @@ int main(int, char**)
       frame2 = frame.t();
       
       cvtColor(frame, edges, CV_BGR2GRAY);
+      
       findFacialMarkersGOR(frame, &cur_face);
       //findFacialMarkersHSV(frame, &cur_face);
+      
       findDarkestPoint(frame, right_eye_rect);
       findDarkestPoint(frame, left_eye_rect);
       imshow("face", frame);
@@ -68,22 +69,11 @@ int main(int, char**)
   return 0;
 }
 
-
-void findFacialMarkersHSV(cv::Mat frame, rokoko_face* cur_face) {
+void findAndAddContoursToFace(cv::Mat imgThresholded, rokoko_face* cur_face) {
   vector<vector<cv::Point> > contours;
   vector<cv::Vec4i> hierarchy;
   int contours_idx = 0;
-
-  cv::Mat imgHSV;
-  cv::cvtColor(frame, imgHSV, cv::COLOR_RGB2HSV); //Convert the captured frame from RGB to HSV
-
-  cv::Mat imgThresholded;
-  cv::inRange(imgHSV, cv::Scalar(iLowH, iLowS, iLowV), cv::Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
-
-  // TODO: Apply erosion/dilation to imgThresholded?
-
-  imshow("thresholded", imgThresholded);
-
+  
   cv::findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE, cv::Point(0, 0));
   
   for (int i = 0; i < contours.size(); i++) {
@@ -95,13 +85,27 @@ void findFacialMarkersHSV(cv::Mat frame, rokoko_face* cur_face) {
     // We don't need to store imgThresholded.cols and .rows / 2 because <3 compilers.
     //cout << "(" << center.x - (imgThresholded.cols/2) << ", " << center.y - (imgThresholded.rows/2) << ")" << endl;
 
-    circle(frame, center, 3, Scalar(0, 0, 255), -1);
-
     cur_face->contours[contours_idx++] = center;
   }
-
   
   cur_face->num_contours = contours_idx;
+}
+
+void findFacialMarkersHSV(cv::Mat frame, rokoko_face* cur_face) {
+
+  cv::Mat imgHSV;
+  cv::cvtColor(frame, imgHSV, cv::COLOR_RGB2HSV); //Convert the captured frame from RGB to HSV
+
+  cv::Mat imgThresholded;
+  cv::inRange(imgHSV, cv::Scalar(iLowH, iLowS, iLowV), cv::Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
+
+  imshow("Thresholded, HSV", imgThresholded);
+
+  findAndAddContoursToFace(imgThresholded, cur_face);
+  
+  for (int i = 0; i < cur_face->num_contours; i++) {
+    circle(frame, cur_face->contours[i], 3, Scalar(0, 0, 255), -1);
+  }
 }
 
 void findFacialMarkersGOR(cv::Mat frame, rokoko_face* cur_face) {
@@ -115,7 +119,13 @@ void findFacialMarkersGOR(cv::Mat frame, rokoko_face* cur_face) {
   cv::bitwise_and(rgbChannels[1] > mingreen, rgbChannels[1] > (rgbChannels[2] * gor), greens);
   cv::bitwise_and(greens, rgbChannels[1] > (rgbChannels[0] * gor), greens);
 
-  imshow("greens", greens);
+  imshow("Thresholded, GOR", greens);
+
+  findAndAddContoursToFace(greens, cur_face);
+  
+  for (int i = 0; i < cur_face->num_contours; i++) {
+    circle(frame, cur_face->contours[i], 3, Scalar(0, 0, 255), -1);
+  }
 }
 
 int findLargestContour(vector<vector<Point> > contours) {

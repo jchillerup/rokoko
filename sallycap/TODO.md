@@ -1,4 +1,5 @@
 # TODOs for sallycap
-* Properly detect the {left,right}EyeRect
 * Automatically ID the dots
+* Properly detect the {left,right}EyeRect
 * Implement the liblo stuff
+* Apply erotion/dilation to imgThresholded?

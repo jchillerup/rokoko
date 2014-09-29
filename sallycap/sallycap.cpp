@@ -3,6 +3,7 @@
 #include "rokoko-common.c"
 #include "lo/lo.h"
 #include "sallycap.hpp"
+#include "stdio.h"
 
 using namespace std;
 using namespace cv;
@@ -13,9 +14,10 @@ int iLowS = 82;
 int iHighS = 255;
 int iLowV = 64;
 int iHighV = 255;
-int contourAreaMin = 100;
+int contourAreaMin = 160;
 int eyeThresh = 52;
-
+int minGreen = 70;
+float gor = 1.2;
 
 
 void spawnSettingsWindow() {
@@ -31,6 +33,8 @@ void spawnSettingsWindow() {
   createTrackbar("HighV", "Tunables", &iHighV, 255);
   createTrackbar("ContourAreaMin", "Tunables", &contourAreaMin, 1000);
   createTrackbar("eyeThresh", "Tunables", &eyeThresh, 255);
+  createTrackbar("minGreen", "Tunables", &minGreen, 255);
+  //createTrackbar("greenOverRed", "Tunables", &gor, 5);
 }
 
 int main(int, char**)
@@ -62,6 +66,9 @@ int main(int, char**)
       
       findDarkestPoint(frame, right_eye_rect);
       findDarkestPoint(frame, left_eye_rect);
+
+      IDContours(&cur_face, frame);
+      
       imshow("face", frame);
       if(waitKey(30) >= 0) break;
     }
@@ -113,10 +120,9 @@ void findFacialMarkersGOR(cv::Mat frame, rokoko_face* cur_face) {
   cv::split(frame, rgbChannels);
   cv::Mat greens;
 
-  int mingreen = 70;
-  float gor = 1.1;
 
-  cv::bitwise_and(rgbChannels[1] > mingreen, rgbChannels[1] > (rgbChannels[2] * gor), greens);
+
+  cv::bitwise_and(rgbChannels[1] > minGreen, rgbChannels[1] > (rgbChannels[2] * gor), greens);
   cv::bitwise_and(greens, rgbChannels[1] > (rgbChannels[0] * gor), greens);
 
   imshow("Thresholded, GOR", greens);
@@ -151,7 +157,7 @@ Point getContourCentroid(vector<Point> contour) {
 }
 
 // We assume the pupil is going to be in the darkest point of a rectangle containing the eye area.
-void findDarkestPoint(cv::Mat frame, cv::Rect region) {
+cv::Point findDarkestPoint(cv::Mat frame, cv::Rect region) {
   cv::Mat eye = frame(region);
   cv::Mat eye_channels[3];
   vector<vector<Point> > contours;
@@ -175,7 +181,7 @@ void findDarkestPoint(cv::Mat frame, cv::Rect region) {
      center of that to estimate the pupil position.
    */
   
-  imshow("eye " + region.y, eye_thresholded);
+  imshow("eye"+ region.y, eye_thresholded);
   findContours( eye_thresholded, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
   largestContour = findLargestContour(contours);
 
@@ -190,14 +196,58 @@ void findDarkestPoint(cv::Mat frame, cv::Rect region) {
       }
     }
   }
-
+  // Debug; draw the region that we're looking inside
+  rectangle(frame, region, 0, 1);
+  
   if (largestContourWithin != -1) {
     Point center = getContourCentroid(contours[largestContourWithin]);
     Point centerOffset = center + Point(region.x, region.y);
   
-    circle(frame, centerOffset, 1, Scalar(255, 255, 0));
-  
+    //circle(frame, centerOffset, 1, Scalar(255, 255, 0));
+    return centerOffset;
   }
-  // Debug; draw the region that we're looking inside
-  rectangle(frame, region, 0, 1);
+}
+
+int findCenterContour(rokoko_face* cur_face) {
+
+
+  
+}
+
+void IDContours(rokoko_face* cur_face, cv::Mat frame) {
+  std::vector<cv::Point> facePoints;
+  std::vector<std::vector<cv::Point> > hullVector;
+  facePoints.assign(cur_face->contours, cur_face->contours + cur_face->num_contours);
+
+  // Make a convex hull around all found contours.
+  std::vector<cv::Point> hull;  
+  convexHull(facePoints, hull, true, true); // TODO: Can probably work faster if last flag is false
+
+  // TODO: hack. We need contours to be in an array so we create one and add
+  // our convex hull to it.
+  hullVector.push_back(hull);
+  
+  drawContours(frame, hullVector, -1, Scalar(0,255,0));
+  
+  cv::Point hullCenter = getContourCentroid(hull);
+
+  circle(frame, hullCenter, 3, Scalar(0,255,0));
+  
+  // Find the point nearest to the center of the convex hull.
+  // We assume this to be the tip of the nose.
+  //int center = findCenterContour(cur_face);
+
+  int minDist = 100000;
+  int minIdx = -1;
+  for (int i = 0; i < facePoints.size(); i++) {
+    double distance = cv::norm( hullCenter - facePoints[i] );
+
+    if (distance < minDist) {
+      minDist =  distance;
+      minIdx = i;
+    }
+  }
+
+  circle(frame, facePoints[minIdx], 5, Scalar(0,255,0));
+  
 }

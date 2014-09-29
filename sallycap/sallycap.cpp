@@ -1,6 +1,7 @@
 #include <iostream>
 #include "opencv2/opencv.hpp"
 #include "rokoko-common.c"
+#include "lo/lo.h"
 
 using namespace std;
 using namespace cv;
@@ -12,9 +13,26 @@ int iHighS = 255;
 int iLowV = 64;
 int iHighV = 255;
 int contourAreaMin = 100;
+int eyeThresh = 52;
 
-void findFacialMarkers(cv::Mat frame, rokoko_face* cur_face);
+void findFacialMarkersGOR(cv::Mat frame, rokoko_face* cur_face);
+void findFacialMarkersHSV(cv::Mat frame, rokoko_face* cur_face);
 void findDarkestPoint(cv::Mat frame, cv::Rect region);
+
+void spawnSettingsWindow() {
+  cv::namedWindow("Tunables", CV_WINDOW_NORMAL);
+  cv::moveWindow("Tunables", 400, 100);
+  
+  // Add trackbars for the HSV settings
+  createTrackbar("LowH",  "Settings", &iLowH, 179); //Hue (0 - 179)
+  createTrackbar("HighH", "Settings", &iHighH, 179);
+  createTrackbar("LowS",  "Settings", &iLowS, 255); //Saturation (0 - 255)
+  createTrackbar("HighS", "Settings", &iHighS, 255);
+  createTrackbar("LowV",  "Settings", &iLowV, 255); //Value (0 - 255)
+  createTrackbar("HighV", "Settings", &iHighV, 255);
+  createTrackbar("ContourAreaMin", "Settings", &contourAreaMin, 1000);
+  createTrackbar("eyeThresh", "Settings", &eyeThresh, 255);
+}
 
 int main(int, char**)
 {
@@ -24,6 +42,8 @@ int main(int, char**)
   if(!cap.isOpened())  // check if we succeeded
     return -1;
 
+  spawnSettingsWindow();
+  
   Mat edges;
   namedWindow("face",1);
   for(;;)
@@ -37,7 +57,8 @@ int main(int, char**)
       frame2 = frame.t();
       
       cvtColor(frame, edges, CV_BGR2GRAY);
-      findFacialMarkers(frame, &cur_face);
+      findFacialMarkersGOR(frame, &cur_face);
+      //findFacialMarkersHSV(frame, &cur_face);
       findDarkestPoint(frame, right_eye_rect);
       findDarkestPoint(frame, left_eye_rect);
       imshow("face", frame);
@@ -48,7 +69,7 @@ int main(int, char**)
 }
 
 
-void findFacialMarkers(cv::Mat frame, rokoko_face* cur_face) {
+void findFacialMarkersHSV(cv::Mat frame, rokoko_face* cur_face) {
   vector<vector<cv::Point> > contours;
   vector<cv::Vec4i> hierarchy;
   int contours_idx = 0;
@@ -61,9 +82,9 @@ void findFacialMarkers(cv::Mat frame, rokoko_face* cur_face) {
 
   // TODO: Apply erosion/dilation to imgThresholded?
 
-  cv::findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE, cv::Point(0, 0));
+  imshow("thresholded", imgThresholded);
 
-  imshow("thrsholded", imgThresholded);
+  cv::findContours(imgThresholded, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE, cv::Point(0, 0));
   
   for (int i = 0; i < contours.size(); i++) {
     if (contourArea(contours[i]) < contourAreaMin || contours_idx == MAX_CONTOURS) continue;
@@ -81,6 +102,20 @@ void findFacialMarkers(cv::Mat frame, rokoko_face* cur_face) {
 
   
   cur_face->num_contours = contours_idx;
+}
+
+void findFacialMarkersGOR(cv::Mat frame, rokoko_face* cur_face) {
+  std::vector<cv::Mat> rgbChannels(3);
+  cv::split(frame, rgbChannels);
+  cv::Mat greens;
+
+  int mingreen = 70;
+  float gor = 1.1;
+
+  cv::bitwise_and(rgbChannels[1] > mingreen, rgbChannels[1] > (rgbChannels[2] * gor), greens);
+  cv::bitwise_and(greens, rgbChannels[1] > (rgbChannels[0] * gor), greens);
+
+  imshow("greens", greens);
 }
 
 int findLargestContour(vector<vector<Point> > contours) {
@@ -119,7 +154,8 @@ void findDarkestPoint(cv::Mat frame, cv::Rect region) {
   imshow("eye g", eye_channels[1]);
   */
   
-  cv::Mat eye_thresholded = eye_channels[2] > 25;
+  cv::Mat eye_thresholded;
+  inRange(eye_channels[2], eyeThresh, 255, eye_thresholded);
 
   /* Find contours in the thresholded image to look at. The first
      contour will be the eye area and be rather large. There will
@@ -128,6 +164,8 @@ void findDarkestPoint(cv::Mat frame, cv::Rect region) {
      largest of the sub-contours within the eye and use the
      center of that to estimate the pupil position.
    */
+  
+  imshow("eye " + region.y, eye_thresholded);
   findContours( eye_thresholded, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
   largestContour = findLargestContour(contours);
 
@@ -149,7 +187,6 @@ void findDarkestPoint(cv::Mat frame, cv::Rect region) {
   
     circle(frame, centerOffset, 1, Scalar(255, 255, 0));
   
-    imshow("eye r", eye_thresholded);
   }
   // Debug; draw the region that we're looking inside
   rectangle(frame, region, 0, 1);

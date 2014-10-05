@@ -7,3 +7,4 @@ cv::Point getContourCentroid(std::vector<cv::Point> contour);
 cv::Point findDarkestPoint(cv::Mat frame, cv::Rect region);
 int findCenterContour(rokoko_face* cur_face);
 void IDContours(rokoko_face* cur_face, cv::Mat frame);
+void dispatch_osc(rokoko_face* cur_face);

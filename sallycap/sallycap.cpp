@@ -1,24 +1,29 @@
 #include <iostream>
+#include "stdio.h"
 #include "opencv2/opencv.hpp"
 #include "rokoko-common.c"
 #include "lo/lo.h"
 #include "sallycap.hpp"
-#include "stdio.h"
 
 using namespace std;
 using namespace cv;
 
-int iLowH = 47;
-int iHighH = 77;
+int iLowH = 38;
+int iHighH = 98;
 int iLowS = 82;
 int iHighS = 255;
 int iLowV = 64;
 int iHighV = 255;
-int contourAreaMin = 160;
+int contourAreaMin = 50;
 int eyeThresh = 52;
 int minGreen = 70;
-float gor = 1.2;
+float gor = 1.1;
+int eyeRectX = 358;
+int eyeRectY = 66;
+int eyeRectH = 159;
 
+std::string osc_address;
+lo_address recipient;
 
 void spawnSettingsWindow() {
   cv::namedWindow("Tunables", CV_WINDOW_NORMAL);
@@ -34,14 +39,22 @@ void spawnSettingsWindow() {
   createTrackbar("ContourAreaMin", "Tunables", &contourAreaMin, 1000);
   createTrackbar("eyeThresh", "Tunables", &eyeThresh, 255);
   createTrackbar("minGreen", "Tunables", &minGreen, 255);
+  createTrackbar("eyeRectX", "Tunables", &eyeRectX, 500);
+  createTrackbar("eyeRectY", "Tunables", &eyeRectY, 300);
+  createTrackbar("eyeRectH", "Tunables", &eyeRectH, 200);
   //createTrackbar("greenOverRed", "Tunables", &gor, 5);
 }
 
 int main(int, char**)
 {
   rokoko_face cur_face;
+
+  string osc_recipient = "10.10.10.108";
+  recipient = lo_address_new(osc_recipient.c_str(), "14040");
+  osc_address = "/1/face";
   
-  VideoCapture cap("../samples/sally/1.wmv"); // open the default camera
+  VideoCapture cap(2// "../samples/rasmus/1.wmv"
+                   ); // open the default camera
   if(!cap.isOpened())  // check if we succeeded
     return -1;
 
@@ -52,21 +65,25 @@ int main(int, char**)
   for(;;)
     {
       Mat frame, frame2;
-      Rect right_eye_rect = Rect(358, 66, 129, 159);
-      Rect left_eye_rect = Rect(358, 226, 129, 159);
-      cap >> frame; // get a new frame from camera
+      Rect right_eye_rect = Rect(eyeRectX, eyeRectY, 129, eyeRectH);
+      Rect left_eye_rect = Rect(eyeRectX, eyeRectY+eyeRectH, 129, eyeRectH);
 
-      // Transpose the frame to get an upright view.
-      frame2 = frame.t();
+      cap >> frame; // get a new frame from camera
+      if(frame.empty()) break;
       
+      // Transpose the frame to get an upright view.
+      //frame = frame2.t();
+
       cvtColor(frame, edges, CV_BGR2GRAY);
       
-      findFacialMarkersGOR(frame, &cur_face);
-      //findFacialMarkersHSV(frame, &cur_face);
+      //findFacialMarkersGOR(frame, &cur_face);
+      findFacialMarkersHSV(frame, &cur_face);
       
-      findDarkestPoint(frame, right_eye_rect);
-      findDarkestPoint(frame, left_eye_rect);
+      cur_face.right_eye = findDarkestPoint(frame, right_eye_rect);
+      cur_face.left_eye = findDarkestPoint(frame, left_eye_rect);
 
+      dispatch_osc(&cur_face);
+      
       IDContours(&cur_face, frame);
       
       imshow("face", frame);
@@ -92,7 +109,10 @@ void findAndAddContoursToFace(cv::Mat imgThresholded, rokoko_face* cur_face) {
     // We don't need to store imgThresholded.cols and .rows / 2 because <3 compilers.
     //cout << "(" << center.x - (imgThresholded.cols/2) << ", " << center.y - (imgThresholded.rows/2) << ")" << endl;
 
-    cur_face->contours[contours_idx++] = center;
+    cur_face->contours[contours_idx].center = center;
+    //strcpy(cur_face->contours[contours_idx].label, "Test"); // TODO: Fix this
+
+    contours_idx++;
   }
   
   cur_face->num_contours = contours_idx;
@@ -111,7 +131,7 @@ void findFacialMarkersHSV(cv::Mat frame, rokoko_face* cur_face) {
   findAndAddContoursToFace(imgThresholded, cur_face);
   
   for (int i = 0; i < cur_face->num_contours; i++) {
-    circle(frame, cur_face->contours[i], 3, Scalar(0, 0, 255), -1);
+    circle(frame, cur_face->contours[i].center, 3, Scalar(0, 0, 255), -1);
   }
 }
 
@@ -119,8 +139,6 @@ void findFacialMarkersGOR(cv::Mat frame, rokoko_face* cur_face) {
   std::vector<cv::Mat> rgbChannels(3);
   cv::split(frame, rgbChannels);
   cv::Mat greens;
-
-
 
   cv::bitwise_and(rgbChannels[1] > minGreen, rgbChannels[1] > (rgbChannels[2] * gor), greens);
   cv::bitwise_and(greens, rgbChannels[1] > (rgbChannels[0] * gor), greens);
@@ -130,7 +148,7 @@ void findFacialMarkersGOR(cv::Mat frame, rokoko_face* cur_face) {
   findAndAddContoursToFace(greens, cur_face);
   
   for (int i = 0; i < cur_face->num_contours; i++) {
-    circle(frame, cur_face->contours[i], 3, Scalar(0, 0, 255), -1);
+    circle(frame, cur_face->contours[i].center, 3, Scalar(0, 0, 255), -1);
   }
 }
 
@@ -181,7 +199,7 @@ cv::Point findDarkestPoint(cv::Mat frame, cv::Rect region) {
      center of that to estimate the pupil position.
    */
   
-  imshow("eye"+ region.y, eye_thresholded);
+  //imshow("eye", eye_thresholded);
   findContours( eye_thresholded, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
   largestContour = findLargestContour(contours);
 
@@ -203,7 +221,7 @@ cv::Point findDarkestPoint(cv::Mat frame, cv::Rect region) {
     Point center = getContourCentroid(contours[largestContourWithin]);
     Point centerOffset = center + Point(region.x, region.y);
   
-    //circle(frame, centerOffset, 1, Scalar(255, 255, 0));
+    circle(frame, centerOffset, 1, Scalar(255, 255, 0));
     return centerOffset;
   }
 }
@@ -217,8 +235,15 @@ int findCenterContour(rokoko_face* cur_face) {
 void IDContours(rokoko_face* cur_face, cv::Mat frame) {
   std::vector<cv::Point> facePoints;
   std::vector<std::vector<cv::Point> > hullVector;
-  facePoints.assign(cur_face->contours, cur_face->contours + cur_face->num_contours);
+  
+  for (int i = 0; i < cur_face->num_contours; i++) {
+    facePoints.push_back(cur_face->contours[i].center);
+  }
 
+  if (facePoints.size() == 0) {
+    return;
+  }
+  
   // Make a convex hull around all found contours.
   std::vector<cv::Point> hull;  
   convexHull(facePoints, hull, true, true); // TODO: Can probably work faster if last flag is false
@@ -226,17 +251,15 @@ void IDContours(rokoko_face* cur_face, cv::Mat frame) {
   // TODO: hack. We need contours to be in an array so we create one and add
   // our convex hull to it.
   hullVector.push_back(hull);
-  
   drawContours(frame, hullVector, -1, Scalar(0,255,0));
-  
-  cv::Point hullCenter = getContourCentroid(hull);
 
+  // Get the center of the convex hull and mark it. We're using it to estimate
+  // the positions of other markers
+  cv::Point hullCenter = getContourCentroid(hull);
   circle(frame, hullCenter, 3, Scalar(0,255,0));
   
   // Find the point nearest to the center of the convex hull.
   // We assume this to be the tip of the nose.
-  //int center = findCenterContour(cur_face);
-
   int minDist = 100000;
   int minIdx = -1;
   for (int i = 0; i < facePoints.size(); i++) {
@@ -249,5 +272,13 @@ void IDContours(rokoko_face* cur_face, cv::Mat frame) {
   }
 
   circle(frame, facePoints[minIdx], 5, Scalar(0,255,0));
+}
+
+
+
+void dispatch_osc(rokoko_face* cur_face) {
+  //pretty_print_face(cur_face);
   
+  lo_blob blob = lo_blob_new(sizeof(rokoko_face), cur_face);
+  lo_send(recipient, osc_address.c_str(), "b", blob);
 }

@@ -45,16 +45,20 @@ void spawnSettingsWindow() {
   //createTrackbar("greenOverRed", "Tunables", &gor, 5);
 }
 
-int main(int, char**)
+int main(int argc, char* argv[])
 {
   rokoko_face cur_face;
 
-  string osc_recipient = "10.10.10.108";
+  if (argc != 4) {
+	  cout << "Not enough commandline arguments given" << endl;
+	  return EXIT_FAILURE;
+  }
+
+  string osc_recipient = argv[2];
   recipient = lo_address_new(osc_recipient.c_str(), "14040");
-  osc_address = "/1/face";
+  osc_address = argv[3];
   
-  VideoCapture cap(2// "../samples/rasmus/1.wmv"
-                   ); // open the default camera
+  VideoCapture cap(atoi(argv[1])); // open the default camera
   if(!cap.isOpened())  // check if we succeeded
     return -1;
 
@@ -74,7 +78,7 @@ int main(int, char**)
       // Transpose the frame to get an upright view.
       //frame = frame2.t();
 
-      cvtColor(frame, edges, CV_BGR2GRAY);
+      // cvtColor(frame, edges, CV_BGR2GRAY);
       
       //findFacialMarkersGOR(frame, &cur_face);
       findFacialMarkersHSV(frame, &cur_face);
@@ -203,7 +207,7 @@ cv::Point findDarkestPoint(cv::Mat frame, cv::Rect region) {
   findContours( eye_thresholded, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
   largestContour = findLargestContour(contours);
 
-  float size;
+  float size = 0;
   int largestContourWithin = -1;
   // Find the largest of the contours that have the largestContour as parent.
   for (int i=0; i < hierarchy.size(); i++) {
@@ -224,12 +228,6 @@ cv::Point findDarkestPoint(cv::Mat frame, cv::Rect region) {
     circle(frame, centerOffset, 1, Scalar(255, 255, 0));
     return centerOffset;
   }
-}
-
-int findCenterContour(rokoko_face* cur_face) {
-
-
-  
 }
 
 void IDContours(rokoko_face* cur_face, cv::Mat frame) {
@@ -271,7 +269,9 @@ void IDContours(rokoko_face* cur_face, cv::Mat frame) {
     }
   }
 
-  circle(frame, facePoints[minIdx], 5, Scalar(0,255,0));
+  if (minIdx != -1) {
+	  circle(frame, facePoints[minIdx], 5, Scalar(0, 255, 0));
+  }
 }
 
 

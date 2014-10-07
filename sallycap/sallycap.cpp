@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 {
   rokoko_face cur_face;
 
-  if (argc != 4) {
+  if (argc != 4 && argc != 5) {
 	  cout << "Not enough commandline arguments given" << endl;
 	  return EXIT_FAILURE;
   }
@@ -57,6 +57,10 @@ int main(int argc, char* argv[])
   string osc_recipient = argv[2];
   recipient = lo_address_new(osc_recipient.c_str(), "14040");
   osc_address = argv[3];
+
+  if (argc == 5) {
+    load_presets(argv[4]);
+  }
   
   VideoCapture cap(atoi(argv[1])); // open the default camera
   if(!cap.isOpened())  // check if we succeeded
@@ -66,34 +70,37 @@ int main(int argc, char* argv[])
   
   Mat edges;
   namedWindow("face",1);
-  for(;;)
-    {
-      Mat frame, frame2;
-      Rect right_eye_rect = Rect(eyeRectX, eyeRectY, 129, eyeRectH);
-      Rect left_eye_rect = Rect(eyeRectX, eyeRectY+eyeRectH, 129, eyeRectH);
+  for(;;) {
+    Mat frame, frame2;
+    Rect right_eye_rect = Rect(eyeRectX, eyeRectY, 129, eyeRectH);
+    Rect left_eye_rect = Rect(eyeRectX, eyeRectY+eyeRectH, 129, eyeRectH);
 
-      cap >> frame; // get a new frame from camera
-      if(frame.empty()) break;
+    cap >> frame; // get a new frame from camera
+    if(frame.empty()) break;
       
-      // Transpose the frame to get an upright view.
-      //frame = frame2.t();
+    // Transpose the frame to get an upright view.
+    //frame = frame2.t();
 
-      // cvtColor(frame, edges, CV_BGR2GRAY);
+    // cvtColor(frame, edges, CV_BGR2GRAY);
       
-      //findFacialMarkersGOR(frame, &cur_face);
-      findFacialMarkersHSV(frame, &cur_face);
+    //findFacialMarkersGOR(frame, &cur_face);
+    findFacialMarkersHSV(frame, &cur_face);
       
-      cur_face.right_eye = findDarkestPoint(frame, right_eye_rect);
-      cur_face.left_eye = findDarkestPoint(frame, left_eye_rect);
+    cur_face.right_eye = findDarkestPoint(frame, right_eye_rect);
+    cur_face.left_eye = findDarkestPoint(frame, left_eye_rect);
 
-      dispatch_osc(&cur_face);
+    dispatch_osc(&cur_face);
       
-      IDContours(&cur_face, frame);
+    IDContours(&cur_face, frame);
       
-      imshow("face", frame);
-      if(waitKey(30) >= 0) break;
-    }
+    imshow("face", frame);
+    if(waitKey(30) >= 0) break;
+  }
 
+  if (argc == 5) {
+    save_presets(argv[4]);
+  }
+  
   return 0;
 }
 
@@ -282,3 +289,52 @@ void dispatch_osc(rokoko_face* cur_face) {
   lo_blob blob = lo_blob_new(sizeof(rokoko_face), cur_face);
   lo_send(recipient, osc_address.c_str(), "b", blob);
 }
+
+void load_presets(std::string filename) {
+  FileStorage fs(filename, FileStorage::READ);
+
+  if (!fs.isOpened()) {
+    return;
+  }
+
+  iLowH = (int) fs["iLowH"];
+  iHighH = (int) fs["iHighH"];
+  iLowS = (int) fs["iLowS"];
+  iHighS = (int) fs["iHighS"];
+  iLowV = (int) fs["iLowV"];
+  iHighV = (int) fs["iHighV"];
+  contourAreaMin = (int) fs["contourAreaMin"];
+  eyeThresh = (int) fs["eyeThresh"];
+  minGreen = (int) fs["minGreen"];
+  gor = (float) fs["gor"];
+  eyeRectX = (int) fs["eyeRectX"];
+  eyeRectY = (int) fs["eyeRectY"];
+  eyeRectH = (int) fs["eyeRectH"];
+
+  fs.release();
+}
+
+void save_presets(std::string filename) {
+  FileStorage fs(filename, FileStorage::WRITE);
+
+  if (!fs.isOpened()) {
+    return;
+  }
+
+  fs << "iLowH" << iLowH;
+  fs << "iHighH" << iHighH;
+  fs << "iLowS" << iLowS;
+  fs << "iHighS" << iHighS;
+  fs << "iLowV" << iLowV;
+  fs << "iHighV" << iHighV;
+  fs << "contourAreaMin" << contourAreaMin;
+  fs << "eyeThresh" << eyeThresh;
+  fs << "minGreen" << minGreen;
+  fs << "gor" << gor;
+  fs << "eyeRectX" << eyeRectX;
+  fs << "eyeRectY" << eyeRectY;
+  fs << "eyeRectH" << eyeRectH;
+
+  fs.release();
+}
+

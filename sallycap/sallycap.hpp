@@ -8,3 +8,5 @@ cv::Point findDarkestPoint(cv::Mat frame, cv::Rect region);
 int findCenterContour(rokoko_face* cur_face);
 void IDContours(rokoko_face* cur_face, cv::Mat frame);
 void dispatch_osc(rokoko_face* cur_face);
+void load_presets(std::string filename);
+void save_presets(std::string filename);

@@ -26,7 +26,7 @@ if __name__ == '__main__':
         
         if len(to_enable) > 0:
             print("Found new devices, waiting for a bit them all to come up")
-            time.sleep(3)
+            time.sleep(6)
 
             # Check if there might be even more new devices in the pipeline
             to_enable = get_new_devices()

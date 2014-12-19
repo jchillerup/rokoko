@@ -71,3 +71,7 @@ class IMU:
         self.descriptor.write(command)
 
         return self.get_identifier() == new_name
+
+    def close(self):
+        self.descriptor.close()
+

@@ -1,6 +1,6 @@
 from imu import IMU
 
-i = IMU('/dev/ttyACM4')
+i = IMU('/dev/ttyACM3')
 
 print("Connected to IMU")
 

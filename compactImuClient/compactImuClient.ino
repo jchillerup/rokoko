@@ -302,6 +302,15 @@ void loop()
           Serial.write((byte*) MPU.m_fusedQuaternion, 4 * sizeof(float));
         }
         break;
+      case 'j':
+      case 'J':
+        if (LOOPSTATE == NOP) {
+          Serial.write((byte*) MPU.m_fusedQuaternion, 4 * sizeof(float));
+          Serial.write((byte*) MPU.m_rawGyro, 3 * sizeof(short));
+          Serial.write((byte*) MPU.m_rawAccel, 3 * sizeof(short));
+          Serial.write((byte*) MPU.m_rawMag, 3 * sizeof(short));
+        }
+        break;
 
       case 'l':
       case 'L':

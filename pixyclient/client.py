@@ -3,10 +3,10 @@ import sys, os, time, struct, serial
 from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
-ANDERS = "192.168.0.114"
+ANDERS = sys.argv[1]
 osc_client = udp_client.UDPClient(ANDERS, 14040)
-
-ser = serial.Serial(sys.argv[1], 115200, timeout=1)
+osc_address = "/%s/face" % sys.argv[2]
+ser = serial.Serial(sys.argv[3], 115200, timeout=1)
 
 def get_packet():
     pl = ""
@@ -67,7 +67,7 @@ while True:
     if pkt is None:
         continue
 
-    msg = osc_message_builder.OscMessageBuilder(address = "/rokoko-udoo2/face")
+    msg = osc_message_builder.OscMessageBuilder(address = osc_address)
     msg.add_arg(pkt)
     msg = msg.build()
     osc_client.send(msg)

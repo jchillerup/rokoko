@@ -1,9 +1,7 @@
-import sys
+import sys, time, struct
 import serial
 import pygame
 from pygame.locals import *
-
-def 
 
 if __name__ == '__main__':
     s = serial.Serial('/dev/ttyACM3')
@@ -16,14 +14,17 @@ if __name__ == '__main__':
     pygame.display.flip()
 
     while True:
-        line = str(s.readline().rstrip())
+        s.write(b"g")
+        time.sleep(0.1)
 
         try:
-            r,g,b,c,what = line.split(";")
+	    r, g, b, c, ra, ga, ba, ca = struct.unpack("HHHHHHHH", s.read(16))
             r = int(255*(float(r)/float(c)))
             g = int(255*(float(g)/float(c)))
             b = int(255*(float(b)/float(c)))
             c = int(c)
+
+	    print "%d, %d, %d, %d" % (r,g,b,c)
 
             if c > 25:
                 screen.fill((r,g,b))

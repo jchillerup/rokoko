@@ -3,6 +3,7 @@
 #include <nanomsg/nn.h>
 #include <nanomsg/pubsub.h>
 #include <nanomsg/pipeline.h>
+#include <nanomsg/tcp.h>
 
 /* ds = downstream *
  * us = upstream   */
@@ -10,7 +11,7 @@
 const int ds_port_number = 14041;
 const int us_port_number = 14040;
 
-const char* ds_url = "tcp://0.0.0.0:14040";
+const char* ds_url = "tcp://*:14040";
 const char* us_url = "ipc:///tmp/rokoko-socket.ipc";
 
 int pubsub_sock;
@@ -27,7 +28,7 @@ int init_pubsub() {
 int init_upstream() {
   // Set up the socket that the upstream connects to
   int sock = nn_socket(AF_SP, NN_PULL);
-  assert (sock >= 0);
+  assert(sock >= 0);
   assert(nn_bind(sock, us_url));
 
   return sock;
@@ -42,9 +43,17 @@ int main() {
   /* the main loop that listens for messages from upstream */
   while (1) {
     char *buf = NULL;
-    int bytes = nn_recv (upstream_sock, &buf, NN_MSG, 0);
-    assert (bytes >= 0);
-    printf ("NODE0: RECEIVED \"%s\"\n", buf);
+
+    // Receive some bytes
+    int recv_bytes = nn_recv (upstream_sock, &buf, NN_MSG, 0);
+    assert (recv_bytes >= 0);
+    
+    // Pass them on
+    int sent_bytes = nn_send (pubsub_sock, buf, recv_bytes, 0);
+    assert(recv_bytes == sent_bytes);
+
+    printf("Sent: %s, %d bytes\n", buf, recv_bytes);
+    
     nn_freemsg (buf);
   }
   

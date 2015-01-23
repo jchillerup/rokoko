@@ -86,6 +86,8 @@ void * work_sensor(void * v_args) {
     if (DEBUG)
       printf("%.2f, %.2f, %.2f, %.2f\n", payload.x, payload.y, payload.z, payload.w);
       
+    nn_send(broker_socket, ((void*) &payload), sizeof(payload), 0);
+
     // Put the payload into an OSC message.
 #ifdef ROKOKO_EXTENDED_IMU
     lo_send(*(args->recipient), osc_address, "sffffiiiiiiiii", args->sensor_ident,

@@ -48,11 +48,11 @@ int main() {
     int recv_bytes = nn_recv (upstream_sock, &buf, NN_MSG, 0);
     assert (recv_bytes >= 0);
     
-    // Pass them on
+    // Pass them on downstream
     int sent_bytes = nn_send (pubsub_sock, buf, recv_bytes, 0);
     assert(recv_bytes == sent_bytes);
 
-    printf("Sent: %s, %d bytes\n", buf, recv_bytes);
+    /* printf("Sent: %s, %d bytes\n", buf, recv_bytes); */
     
     nn_freemsg (buf);
   }

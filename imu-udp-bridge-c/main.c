@@ -10,12 +10,17 @@
 #include <time.h>
 #include "settings.h"
 
+#include <nanomsg/nn.h>
+#include <nanomsg/tcp.h>
+#include <nanomsg/pipeline.h>
+
 #define ROKOKO_IMU 1
 #define ROKOKO_COLOR 2
 
 char * osc_suit_id;
 char * osc_ip;
-
+const char* broker_url = "ipc:///tmp/rokoko-socket.ipc";
+int broker_socket;
 struct timespec delay_before_read;
 
 void prepare_terminal(struct termios * tio) {
@@ -54,7 +59,6 @@ typedef struct sensor_args {
 #include "work_sensor.c"
 #include "work_glove.c"
 
-
 int main(int argc,char** argv)
 {
   // We allocate as many threads as we have arguments for the program, one for each device
@@ -71,6 +75,10 @@ int main(int argc,char** argv)
 
   osc_ip = argv[1];
   osc_suit_id = argv[2];
+
+  // Set up a socket for the broker
+  broker_socket = nn_socket(AF_SP, NN_PUSH);
+  nn_connect(broker_socket, broker_url);
   
   printf("ROKOKO positure and color streamer starting, sending to osc://%s%s\n", osc_ip, osc_suit_id);  
   prepare_terminal(&tio);

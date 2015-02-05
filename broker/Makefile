@@ -7,3 +7,6 @@ connect:
 
 publish:
 	nanocat --push --connect ipc:///tmp/rokoko-socket.ipc -D "Hejsa"
+
+avahi:
+	avahi-publish-service -s `hostname` _rokoko._tcp 14041

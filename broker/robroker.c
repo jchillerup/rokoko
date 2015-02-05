@@ -5,8 +5,8 @@
 #include <nanomsg/pipeline.h>
 #include <nanomsg/tcp.h>
 
-/* ds = downstream *
- * us = upstream   */
+/* ds = downstream (listeners) *
+ * us = upstream (sensors)     */
 
 const int ds_port_number = 14041;
 const int us_port_number = 14040;

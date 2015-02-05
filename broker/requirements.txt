@@ -1,0 +1,2 @@
+pybonjour
+nanomsg
